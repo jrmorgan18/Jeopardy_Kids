@@ -1,0 +1,1271 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Kids Jeopardy">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}[hidden]{display:none!important}</style>
+</head>
+<body>
+<title>Kids Jeopardy</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Lexend:wght@400;500;700&display=swap">
+<style>
+/* Layout: one screen at a time (home → lesson → board → big finish). TV game-show look: blue cells on a black grid, gold values, white caps. */
+:root {
+  --night: #040A33;
+  --night-dot: #0B1552;
+  --blue: #0A1BA6;
+  --blue-hi: #1B32D2;
+  --blue-deep: #06106B;
+  --line: #000000;
+  --gold: #FFC72C;
+  --white: #FFFFFF;
+  --soft: #C3CCFF;
+  --right: #1E9E5A;
+  --wrong: #7A1F2B;
+  --right-bg: #0E5A36;
+  --wrong-bg: #551520;
+  --font-display: "Oswald", "Arial Narrow", "Helvetica Neue", Impact, sans-serif;
+  --font-body: "Lexend", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --r: 10px;
+  --stick: 0 6px 0 var(--line);
+  color-scheme: dark;
+}
+html, body { height: 100%; }
+body {
+  background-color: var(--night);
+  background-image: radial-gradient(var(--night-dot) 2px, transparent 2.5px);
+  background-size: 28px 28px;
+  color: var(--white);
+  font-family: var(--font-body);
+  font-size: 17px;
+  -webkit-tap-highlight-color: transparent;
+  overflow-x: hidden;
+}
+button { font: inherit; color: inherit; cursor: pointer; touch-action: manipulation; }
+button:focus-visible, input:focus-visible { outline: 4px solid var(--gold); outline-offset: 3px; }
+h1, h2, h3 { font-family: var(--font-display); font-weight: 700; text-transform: uppercase; letter-spacing: .02em; text-wrap: balance; margin: 0; line-height: 1.05; }
+
+.wrap {
+  min-height: 100%;
+  box-sizing: border-box;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 18px 28px;
+  max-width: 1180px;
+  margin: 0 auto;
+}
+
+/* Buttons */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: .5em;
+  border: 3px solid var(--line); border-radius: var(--r);
+  background: var(--gold); color: var(--line);
+  font-family: var(--font-display); font-weight: 700; font-size: 1.35rem; text-transform: uppercase; letter-spacing: .03em;
+  padding: .4em 1.2em .38em; box-shadow: var(--stick);
+  transition: transform .08s, box-shadow .08s;
+}
+.btn:active { transform: translateY(4px); box-shadow: 0 2px 0 var(--line); }
+.btn[disabled] { opacity: .5; cursor: default; }
+.btn.big { font-size: 1.7rem; padding: .45em 1.5em .42em; }
+.btn.ghost { background: transparent; color: var(--white); border-color: var(--soft); box-shadow: none; font-size: 1.05rem; }
+.btn.ghost:active { transform: translateY(2px); }
+.btn.alt { background: var(--blue-hi); color: var(--white); }
+.btn.green { background: var(--right); color: var(--white); }
+.btn.small { font-size: 1rem; padding: .32em .9em .3em; box-shadow: 0 4px 0 var(--line); }
+
+/* ---------- HOME ---------- */
+.logo { display: flex; flex-direction: column; align-items: center; gap: 8px; margin: 10px 0 22px; }
+.logo-word {
+  font-family: var(--font-display); font-weight: 700; text-transform: uppercase; letter-spacing: .02em;
+  font-size: clamp(3.2rem, 11vw, 6rem); line-height: .95; color: var(--gold);
+  text-shadow: 4px 4px 0 var(--line), 0 0 30px rgba(255, 199, 44, .25);
+  display: flex; flex-wrap: wrap; justify-content: center; gap: 0 .3em;
+}
+.logo-tag { color: var(--soft); font-size: 1.05rem; text-align: center; margin: 0; }
+
+.setup { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 18px; max-width: 1100px; margin: 0 auto; }
+.panel { background: var(--blue-deep); color: var(--white); border: 3px solid var(--line); border-radius: var(--r); box-shadow: var(--stick); padding: 18px 20px 20px; display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.panel h2 { font-size: 1.6rem; color: var(--gold); text-shadow: 2px 2px 0 var(--line); }
+.panel .hint { color: var(--soft); font-size: .92rem; margin: -6px 0 0; }
+.chips { display: flex; flex-wrap: wrap; gap: 10px; }
+.chip {
+  border: 3px solid var(--line); border-radius: 8px; background: var(--blue); color: var(--white);
+  padding: 7px 14px 6px; font-family: var(--font-display); font-weight: 600; font-size: 1.15rem; line-height: 1.15; text-transform: uppercase; letter-spacing: .02em;
+  display: flex; flex-direction: column; align-items: flex-start; text-align: left;
+}
+.chip small { font-family: var(--font-body); font-weight: 400; font-size: .76rem; color: var(--soft); text-transform: none; letter-spacing: 0; }
+.chip[aria-pressed="true"] { background: var(--gold); color: var(--line); box-shadow: 0 4px 0 var(--line); }
+.chip[aria-pressed="true"] small { color: var(--line); }
+.chip.round { min-width: 52px; align-items: center; }
+.names { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; }
+.names input {
+  width: 100%; box-sizing: border-box; font: inherit; font-size: 1.1rem; color: var(--line);
+  border: 3px solid var(--line); border-radius: 8px; padding: 8px 12px; background: var(--white);
+}
+.toggle { display: flex; align-items: center; gap: 12px; background: var(--blue); border: 3px solid var(--line); border-radius: 8px; padding: 10px 14px; text-align: left; color: var(--white); }
+.toggle .knob { flex: none; width: 52px; height: 30px; border-radius: 999px; border: 3px solid var(--line); background: var(--blue-deep); position: relative; transition: background .15s; }
+.toggle .knob::after { content: ""; position: absolute; top: 2px; left: 2px; width: 20px; height: 20px; border-radius: 50%; background: var(--white); border: 2px solid var(--line); transition: left .15s; }
+.toggle[aria-pressed="true"] .knob { background: var(--gold); }
+.toggle[aria-pressed="true"] .knob::after { left: 24px; }
+.toggle b { font-family: var(--font-display); font-weight: 600; font-size: 1.15rem; text-transform: uppercase; letter-spacing: .02em; display: block; }
+.toggle span.t { font-size: .85rem; color: var(--soft); }
+.start-row { display: flex; flex-direction: column; align-items: center; gap: 14px; margin-top: 26px; }
+
+/* ---------- LESSON ---------- */
+.topbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
+.topbar h2 { font-size: clamp(1.4rem, 3.5vw, 2rem); color: var(--gold); text-shadow: 2px 2px 0 var(--line); }
+.progress { flex: 1 1 200px; height: 16px; border-radius: 999px; background: var(--blue-deep); border: 3px solid var(--line); overflow: hidden; min-width: 120px; }
+.progress i { display: block; height: 100%; background: var(--gold); width: 0; transition: width .3s; }
+.lesson-card {
+  background: var(--blue); color: var(--white); border: 4px solid var(--line); border-radius: 14px; box-shadow: 0 8px 0 var(--line);
+  max-width: 820px; margin: 0 auto; padding: clamp(18px, 4vw, 36px); display: flex; flex-direction: column; align-items: center; gap: 14px; text-align: center;
+  min-height: min(56vh, 460px); justify-content: center; box-sizing: border-box;
+}
+.cat-pill { font-family: var(--font-display); font-weight: 600; font-size: 1rem; letter-spacing: .06em; text-transform: uppercase; border: 3px solid var(--line); border-radius: 6px; padding: 3px 12px 2px; background: var(--gold); color: var(--line); }
+.lesson-card .pic { font-size: clamp(4rem, 14vw, 7rem); line-height: 1; }
+.lesson-card .fact { font-size: clamp(1.3rem, 3.4vw, 2rem); line-height: 1.4; max-width: 30ch; margin: 0; text-shadow: 2px 2px 0 var(--line); }
+.lesson-card .fact b { background: var(--gold); color: var(--line); text-shadow: none; padding: 0 .2em; border-radius: 4px; box-decoration-break: clone; -webkit-box-decoration-break: clone; }
+.lesson-card .peek { font-size: .98rem; color: var(--soft); max-width: 46ch; margin: 0; }
+.lesson-card .peek strong { color: var(--white); }
+.lesson-card h3 { font-size: clamp(2.2rem, 6vw, 3.4rem); color: var(--gold); text-shadow: 3px 3px 0 var(--line); }
+.lesson-nav { display: flex; justify-content: center; align-items: center; gap: 14px; flex-wrap: wrap; margin-top: 22px; }
+
+/* ---------- BOARD ---------- */
+.scores { display: flex; flex-wrap: wrap; gap: 10px; flex: 1 1 auto; }
+.score {
+  display: flex; align-items: center; gap: 10px; background: var(--blue-deep); border: 3px solid var(--line); border-radius: 8px; padding: 5px 14px 4px;
+  font-family: var(--font-display); font-weight: 600; font-size: 1.1rem; text-transform: uppercase; color: var(--soft);
+}
+.score .pts { font-size: 1.5rem; color: var(--white); font-variant-numeric: tabular-nums; }
+.score.turn { background: var(--gold); color: var(--line); box-shadow: 0 4px 0 var(--line); }
+.score.turn .pts { color: var(--line); }
+.turn-line { font-family: var(--font-display); font-weight: 600; text-transform: uppercase; letter-spacing: .03em; font-size: clamp(1.2rem, 3vw, 1.6rem); text-align: center; margin: 4px 0 12px; }
+.board {
+  display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: clamp(4px, .8vw, 8px);
+  background: var(--line); border: clamp(4px, .8vw, 8px) solid var(--line); border-radius: 6px; box-shadow: 0 0 0 2px var(--blue-deep), 0 10px 30px rgba(0, 0, 0, .5);
+}
+.board.locked { pointer-events: none; }
+.col { display: grid; grid-template-rows: auto repeat(5, 1fr); gap: clamp(4px, .8vw, 8px); min-width: 0; }
+.cat-head {
+  background: var(--blue); color: var(--white); border-radius: 2px; margin-bottom: clamp(4px, .8vw, 8px);
+  min-height: clamp(70px, 13vh, 112px); display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 6px 4px; text-align: center;
+}
+.cat-head .e { font-size: clamp(1.3rem, 3.2vw, 2rem); line-height: 1; }
+.cat-head .n { font-family: var(--font-display); font-weight: 700; text-transform: uppercase; letter-spacing: .02em; font-size: clamp(.8rem, 2vw, 1.3rem); line-height: 1.05; overflow-wrap: anywhere; margin-top: 4px; text-shadow: 2px 2px 0 var(--line); }
+.tile {
+  border: 0; border-radius: 2px; background: var(--blue); color: var(--gold);
+  height: clamp(56px, 11vh, 104px); font-family: var(--font-display); font-weight: 700; font-size: clamp(1.4rem, 4.6vw, 3rem);
+  text-shadow: 3px 3px 0 var(--line); font-variant-numeric: tabular-nums; padding: 0; transition: background .1s;
+}
+.tile:active { background: var(--blue-hi); }
+.tile.bot-pick { background: var(--blue-hi); outline: 4px solid var(--gold); outline-offset: -4px; }
+.tile.done { background: var(--blue-deep); color: var(--soft); text-shadow: none; font-size: clamp(1rem, 2.6vw, 1.5rem); cursor: default; }
+.board-foot { display: flex; justify-content: center; margin-top: 22px; }
+.round-tag { margin: 0 auto 6px; width: fit-content; font-family: var(--font-display); font-weight: 700; text-transform: uppercase; letter-spacing: .06em; font-size: 1rem; color: var(--soft); border: 2px solid var(--soft); border-radius: 6px; padding: 2px 12px 1px; }
+.round-tag.double { color: var(--line); background: var(--gold); border-color: var(--line); box-shadow: 0 3px 0 var(--line); font-size: 1.15rem; }
+
+/* Round break choices */
+.next-choices { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); gap: 14px; width: 100%; }
+.next-choice {
+  display: flex; flex-direction: column; gap: 6px; align-items: center; text-align: center; min-width: 0;
+  border: 3px solid var(--line); border-radius: var(--r); box-shadow: var(--stick); padding: 16px 16px 14px;
+  background: var(--gold); color: var(--line); transition: transform .08s, box-shadow .08s;
+}
+.next-choice b { font-family: var(--font-display); font-weight: 700; text-transform: uppercase; letter-spacing: .03em; font-size: 1.6rem; }
+.next-choice span { font-size: .98rem; line-height: 1.35; }
+.next-choice.alt { background: var(--blue-hi); color: var(--white); }
+.next-choice:active { transform: translateY(4px); box-shadow: 0 2px 0 var(--line); }
+
+/* ---------- CLUE MODAL ---------- */
+.modal { position: fixed; inset: 0; z-index: 20; background: rgba(0, 0, 0, .8); display: flex; align-items: center; justify-content: center; overflow-y: auto;
+  padding: max(16px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) max(16px, env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); }
+.clue {
+  background: var(--blue); color: var(--white); border: 4px solid var(--line); border-radius: 14px; box-shadow: 0 8px 0 var(--line);
+  width: 100%; max-width: 820px; padding: clamp(16px, 3.5vw, 32px); box-sizing: border-box; display: flex; flex-direction: column; gap: 16px; margin: auto;
+  animation: pop .25s ease-out;
+}
+@keyframes pop { from { transform: scale(.85); opacity: .4; } to { transform: scale(1); opacity: 1; } }
+.clue-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.clue-top .val { font-family: var(--font-display); font-weight: 700; font-size: 1.7rem; color: var(--gold); text-shadow: 2px 2px 0 var(--line); }
+.star-banner { background: var(--gold); color: var(--line); border: 3px solid var(--line); border-radius: 8px; text-align: center; font-family: var(--font-display); font-weight: 700; text-transform: uppercase; font-size: clamp(1.3rem, 3.5vw, 1.8rem); padding: 4px 10px 2px; }
+.who { font-family: var(--font-display); font-weight: 600; text-transform: uppercase; letter-spacing: .03em; font-size: 1.2rem; color: var(--soft); text-align: center; }
+.q { font-size: clamp(1.45rem, 4vw, 2.35rem); line-height: 1.3; text-align: center; margin: 0; font-weight: 500; text-shadow: 2px 2px 0 var(--line); }
+.choices { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; width: 100%; }
+@media (max-width: 560px) { .choices { grid-template-columns: 1fr; } }
+.choices.locked { pointer-events: none; }
+.choice {
+  border: 3px solid var(--line); border-radius: 10px; background: var(--blue-deep); box-shadow: 0 5px 0 var(--line); color: var(--white);
+  font-size: clamp(1.1rem, 2.8vw, 1.45rem); font-weight: 500; padding: 14px 14px 12px; text-align: left; display: flex; gap: 12px; align-items: center; min-height: 64px;
+}
+.choice .k { flex: none; width: 36px; height: 36px; border-radius: 50%; border: 3px solid var(--line); display: grid; place-items: center; font-family: var(--font-display); font-weight: 700; background: var(--gold); color: var(--line); font-size: 1.1rem; }
+.choice:active { transform: translateY(3px); box-shadow: 0 2px 0 var(--line); }
+.choice.right { background: var(--right); }
+.choice.wrong { background: var(--wrong); text-decoration: line-through; text-decoration-thickness: 2px; }
+.choice.bot-pick { outline: 4px solid var(--gold); outline-offset: 2px; }
+.choice[disabled] { cursor: default; }
+.choice.dim { opacity: .45; }
+.result { border: 3px solid var(--line); border-radius: 10px; padding: 12px 16px; display: flex; flex-direction: column; gap: 6px; text-align: center; }
+.result.ok { background: var(--right-bg); }
+.result.no { background: var(--wrong-bg); }
+.result h3 { font-size: clamp(1.6rem, 4.5vw, 2.4rem); color: var(--gold); text-shadow: 2px 2px 0 var(--line); }
+.result p { margin: 0; font-size: 1.1rem; line-height: 1.45; }
+.result p b { background: var(--gold); color: var(--line); padding: 0 .2em; border-radius: 4px; }
+.thinking { font-family: var(--font-display); font-weight: 600; text-transform: uppercase; letter-spacing: .03em; font-size: 1.4rem; text-align: center; color: var(--gold); }
+.thinking i { display: inline-block; animation: blink 1.2s infinite; font-style: normal; }
+.thinking i:nth-child(2) { animation-delay: .2s; } .thinking i:nth-child(3) { animation-delay: .4s; }
+@keyframes blink { 0%, 100% { opacity: .2; } 50% { opacity: 1; } }
+.clue-actions { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; }
+
+/* ---------- FINAL & END ---------- */
+.center-card { background: var(--blue); color: var(--white); border: 4px solid var(--line); border-radius: 14px; box-shadow: 0 8px 0 var(--line);
+  max-width: 760px; margin: 30px auto 0; padding: clamp(18px, 4vw, 36px); display: flex; flex-direction: column; align-items: center; gap: 16px; text-align: center; box-sizing: border-box; }
+.center-card h2 { font-size: clamp(2.2rem, 6vw, 3.4rem); color: var(--gold); text-shadow: 3px 3px 0 var(--line); }
+.center-card p { margin: 0; font-size: 1.2rem; line-height: 1.45; max-width: 36ch; }
+.center-card .note { font-size: 1rem; color: var(--soft); }
+.wagers { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; }
+.podium { display: flex; flex-direction: column; gap: 10px; width: 100%; max-width: 460px; }
+.podium .row { display: flex; align-items: center; gap: 12px; border: 3px solid var(--line); border-radius: 8px; padding: 8px 14px 6px; background: var(--blue-deep); font-family: var(--font-display); font-weight: 600; text-transform: uppercase; font-size: 1.4rem; }
+.podium .row.win { background: var(--gold); color: var(--line); box-shadow: 0 4px 0 var(--line); }
+.podium .row .nm { flex: 1; text-align: left; min-width: 0; overflow-wrap: anywhere; }
+.podium .row .nm small { display: block; font-family: var(--font-body); font-weight: 400; text-transform: none; font-size: .85rem; opacity: .8; }
+.podium .row .pts { font-variant-numeric: tabular-nums; }
+.trophy { font-size: clamp(4rem, 14vw, 6.5rem); line-height: 1; }
+
+#confetti { position: fixed; inset: 0; pointer-events: none; z-index: 40; width: 100%; height: 100%; }
+@media (prefers-reduced-motion: reduce) { .clue { animation: none; } .progress i { transition: none; } .thinking i { animation: none; opacity: 1; } }
+</style>
+
+<canvas id="confetti" aria-hidden="true"></canvas>
+
+<main class="wrap" id="app">
+  <!-- HOME -->
+  <section id="scr-home">
+    <div class="logo">
+      <div class="logo-word" aria-label="Kids Jeopardy"><span>Kids</span><span>Jeopardy</span></div>
+      <p class="logo-tag">Learn the facts, then play the board!</p>
+    </div>
+    <div class="setup">
+      <div class="panel">
+        <h2>Who's playing?</h2>
+        <div class="chips" id="player-count" role="group" aria-label="Number of players"></div>
+        <div class="names" id="names"></div>
+        <button class="toggle" id="bot-toggle" type="button" aria-pressed="false">
+          <span class="knob" aria-hidden="true"></span>
+          <span><b>🤖 Play against the computer</b><span class="t">Robo the robot joins the game</span></span>
+        </button>
+        <div class="chips" id="bot-levels" role="group" aria-label="Computer level"></div>
+      </div>
+      <div class="panel">
+        <h2>How tricky?</h2>
+        <p class="hint">Easy questions are worth 100. The hardest are worth 500.</p>
+        <div class="chips" id="levels" role="group" aria-label="Grade level"></div>
+        <button class="toggle" id="read-toggle" type="button" aria-pressed="true">
+          <span class="knob" aria-hidden="true"></span>
+          <span><b>Read questions out loud</b><span class="t">Great for new readers</span></span>
+        </button>
+      </div>
+      <div class="panel">
+        <h2>Topics</h2>
+        <p class="hint">Favorites are books, sports, movies, and TV.</p>
+        <div class="chips" id="topics" role="group" aria-label="Topics"></div>
+      </div>
+    </div>
+    <div class="start-row">
+      <button class="btn big" id="go-lesson" type="button">📚 Start the Lesson</button>
+      <button class="btn ghost" id="go-play" type="button">Skip the lesson and play</button>
+    </div>
+  </section>
+
+  <!-- LESSON -->
+  <section id="scr-lesson" hidden>
+    <div class="topbar">
+      <h2 id="lesson-title">Lesson Time</h2>
+      <div class="progress" aria-hidden="true"><i id="lesson-bar"></i></div>
+      <button class="btn ghost small" id="lesson-skip" type="button">I'm ready to play ▶</button>
+    </div>
+    <div class="lesson-card" id="lesson-card"></div>
+    <div class="lesson-nav">
+      <button class="btn alt" id="lesson-back" type="button">◀ Back</button>
+      <button class="btn alt speak" id="lesson-speak" type="button">🔊 Read to me</button>
+      <button class="btn" id="lesson-next" type="button">Next ▶</button>
+    </div>
+  </section>
+
+  <!-- BOARD -->
+  <section id="scr-board" hidden>
+    <div class="topbar">
+      <div class="scores" id="scores"></div>
+      <button class="btn ghost small" id="quit" type="button">🏠 Home</button>
+    </div>
+    <p class="round-tag" id="round-tag"></p>
+    <p class="turn-line" id="turn-line"></p>
+    <div class="board" id="board"></div>
+    <div class="board-foot"><button class="btn ghost small" id="review" type="button">📚 Review the lesson</button></div>
+  </section>
+
+  <!-- FINAL / END -->
+  <section id="scr-final" hidden>
+    <div class="center-card" id="final-card"></div>
+  </section>
+</main>
+
+<div class="modal" id="modal" hidden>
+  <div class="clue" id="clue" role="dialog" aria-modal="true" aria-labelledby="clue-q"></div>
+</div>
+
+<script>
+/* ===== Question bank =====
+   Each question: [grade, emoji, question, answer, [wrong answers], lesson fact]
+   The fact is shown in the lesson and again after answering. <b> marks the answer. */
+const BANK = [
+ { id: "animals", name: "Animals", emoji: "🐾", intro: "Let's meet some amazing animals!", qs: [
+  [1, "🐶", "What is a baby dog called?", "A puppy", ["A kitten", "A calf", "A cub"], "A baby dog is called a <b>puppy</b>."],
+  [1, "🐄", "Which animal says “moo”?", "A cow", ["A pig", "A duck", "A horse"], "A <b>cow</b> says “moo!” Cows give us milk."],
+  [2, "🦘", "What is a baby kangaroo called?", "A joey", ["A kit", "A chick", "A foal"], "A baby kangaroo is called a <b>joey</b>. It rides in its mom's pouch."],
+  [2, "🕷️", "How many legs does a spider have?", "8", ["6", "4", "10"], "Spiders have <b>8 legs</b>. That's two more than an insect!"],
+  [3, "🐰", "What do we call an animal that eats only plants?", "An herbivore", ["A carnivore", "An omnivore", "A predator"], "An animal that eats only plants is an <b>herbivore</b>. Rabbits and cows are herbivores."],
+  [3, "🦒", "Which animal is the tallest in the world?", "The giraffe", ["The elephant", "The camel", "The ostrich"], "The <b>giraffe</b> is the tallest animal. Its neck alone can be 6 feet long!"],
+  [4, "🐋", "What is the largest animal that has ever lived?", "The blue whale", ["The African elephant", "T. rex", "The great white shark"], "The <b>blue whale</b> is the biggest animal ever. It's even bigger than any dinosaur!"],
+  [4, "🦁", "What is a group of lions called?", "A pride", ["A pack", "A herd", "A flock"], "A group of lions is called a <b>pride</b>."],
+  [5, "🦉", "What do we call animals that are awake at night and sleep during the day?", "Nocturnal", ["Hibernating", "Migrating", "Camouflaged"], "Animals that are active at night are <b>nocturnal</b>. Owls and bats are nocturnal."],
+  [5, "🦇", "What kind of animal is a bat?", "A mammal", ["A bird", "A reptile", "An insect"], "A bat is a <b>mammal</b>. It is the only mammal that can really fly!"],
+ ]},
+ { id: "space", name: "Outer Space", emoji: "🚀", intro: "3, 2, 1... blast off into space!", qs: [
+  [1, "☀️", "What is the star at the center of our solar system?", "The Sun", ["The Moon", "Mars", "The North Star"], "<b>The Sun</b> is a star! All the planets travel around it."],
+  [1, "🚀", "What do astronauts ride to get into space?", "A rocket", ["A submarine", "A hot air balloon", "A train"], "Astronauts ride a <b>rocket</b> to blast into space."],
+  [2, "🔴", "Which planet is called the Red Planet?", "Mars", ["Venus", "Saturn", "Neptune"], "<b>Mars</b> is called the Red Planet because its dusty ground is red, like rust."],
+  [2, "🌕", "Why does the Moon shine at night?", "Sunlight bounces off it", ["It is on fire", "It has light bulbs", "Lightning hits it"], "The Moon doesn't make its own light. <b>Sunlight bounces off it</b>, like a mirror."],
+  [3, "🪐", "What is the largest planet in our solar system?", "Jupiter", ["Saturn", "Earth", "Neptune"], "<b>Jupiter</b> is the biggest planet. More than 1,000 Earths could fit inside it!"],
+  [3, "💫", "Which planet has beautiful rings made of ice and rock?", "Saturn", ["Mars", "Mercury", "Venus"], "<b>Saturn</b> has the biggest, brightest rings, made of chunks of ice and rock."],
+  [4, "🌍", "How many planets are in our solar system?", "8", ["9", "7", "10"], "There are <b>8 planets</b>. Pluto is now called a dwarf planet."],
+  [4, "👨‍🚀", "Who was the first person to walk on the Moon?", "Neil Armstrong", ["Sally Ride", "John Glenn", "Amelia Earhart"], "<b>Neil Armstrong</b> was the first person to walk on the Moon, in 1969."],
+  [5, "🧲", "What force keeps the planets moving around the Sun?", "Gravity", ["Magnetism", "Wind", "Friction"], "<b>Gravity</b> is the pull that keeps the planets circling the Sun. It also keeps your feet on the ground!"],
+  [5, "🔥", "Which planet is closest to the Sun?", "Mercury", ["Venus", "Mars", "Earth"], "<b>Mercury</b> is the closest planet to the Sun, and the smallest planet too."],
+ ]},
+ { id: "body", name: "My Body", emoji: "🧠", intro: "Let's learn how your amazing body works!", qs: [
+  [1, "👃", "What body part do you use to smell?", "Your nose", ["Your ears", "Your eyes", "Your elbows"], "You smell with your <b>nose</b>. Sniff, sniff!"],
+  [1, "✋", "How many fingers are on one hand, counting the thumb?", "5", ["4", "6", "10"], "One hand has <b>5 fingers</b>, counting the thumb. Two hands have 10!"],
+  [2, "❤️", "What part of your body pumps blood?", "Your heart", ["Your lungs", "Your stomach", "Your brain"], "Your <b>heart</b> is a strong muscle that pumps blood all around your body."],
+  [2, "🧠", "Which body part is the boss that tells the rest of your body what to do?", "Your brain", ["Your heart", "Your bones", "Your skin"], "Your <b>brain</b> is like a computer that controls your whole body."],
+  [3, "🌬️", "What do your lungs help you do?", "Breathe", ["Digest food", "See", "Hear"], "Your lungs help you <b>breathe</b>. They fill up with air like balloons."],
+  [3, "🖐️", "What is the largest organ of the human body?", "Skin", ["Heart", "Liver", "Brain"], "Your <b>skin</b> is your largest organ! It covers and protects your whole body."],
+  [4, "🦴", "About how many bones does a grown-up have?", "206", ["52", "100", "1,000"], "A grown-up has <b>206 bones</b>. Babies are born with even more, and some join together as they grow."],
+  [4, "🫁", "What gas do your lungs take in from the air?", "Oxygen", ["Carbon dioxide", "Helium", "Steam"], "Your lungs take in <b>oxygen</b>. You breathe out carbon dioxide."],
+  [5, "🦷", "What is the hard, white outside layer of your teeth called?", "Enamel", ["Gums", "Crust", "Marrow"], "The hard outside of your teeth is <b>enamel</b>. It's the hardest thing in your whole body!"],
+  [5, "🩸", "What are the tubes called that carry blood back to your heart?", "Veins", ["Nerves", "Tendons", "Muscles"], "<b>Veins</b> carry blood back to your heart. Arteries carry blood away from it."],
+ ]},
+ { id: "math", name: "Math Magic", emoji: "➕", intro: "Numbers are like magic! Let's practice.", qs: [
+  [1, "🍎", "What is 3 + 4?", "7", ["6", "8", "5"], "<b>3 + 4 = 7</b>. Start at 3 and count up four: 4, 5, 6, 7!"],
+  [1, "🔺", "How many sides does a triangle have?", "3", ["4", "5", "6"], "A triangle has <b>3 sides</b> and 3 corners. “Tri” means three!"],
+  [2, "🍪", "What is 10 − 6?", "4", ["3", "5", "16"], "<b>10 − 6 = 4</b>. If you have 10 cookies and eat 6, you have 4 left."],
+  [2, "🪙", "How many cents is a quarter worth?", "25 cents", ["10 cents", "5 cents", "50 cents"], "A quarter is worth <b>25 cents</b>. Four quarters make one dollar!"],
+  [3, "✖️", "What is 6 × 7?", "42", ["36", "48", "49"], "<b>6 × 7 = 42</b>. That's six groups of seven."],
+  [3, "⏰", "How many minutes are in one hour?", "60", ["100", "30", "24"], "There are <b>60 minutes</b> in one hour."],
+  [4, "⬡", "How many sides does a hexagon have?", "6", ["5", "8", "7"], "A hexagon has <b>6 sides</b>. Honeycomb cells are hexagons!"],
+  [4, "🍕", "What is one half written as a decimal?", "0.5", ["0.2", "1.2", "0.05"], "One half is <b>0.5</b> as a decimal. Half a pizza is 0.5 of the pizza."],
+  [5, "🔢", "What is 12 × 12?", "144", ["124", "132", "156"], "<b>12 × 12 = 144</b>. Twelve twelves is also called a “gross.”"],
+  [5, "📐", "What do we call an angle that is exactly 90 degrees, like the corner of a square?", "A right angle", ["An acute angle", "An obtuse angle", "A straight angle"], "An angle of exactly 90 degrees is a <b>right angle</b>. Every corner of a square is one."],
+ ]},
+ { id: "words", name: "Word Wizards", emoji: "📚", intro: "Let's play with letters and words!", qs: [
+  [1, "🎩", "Which word rhymes with “cat”?", "Hat", ["Dog", "Cup", "Sun"], "<b>Hat</b> rhymes with cat. So do bat, mat, and sat!"],
+  [1, "🔤", "What letter comes right after A?", "B", ["C", "D", "Z"], "A, <b>B</b>, C! The letter B comes right after A."],
+  [2, "🧊", "What is the opposite of “hot”?", "Cold", ["Warm", "Wet", "Big"], "The opposite of hot is <b>cold</b>."],
+  [2, "🏠", "What do we call a word that names a person, place, or thing?", "A noun", ["A verb", "An adjective", "A vowel"], "A word that names a person, place, or thing is a <b>noun</b>. Dog, school, and mom are nouns."],
+  [3, "🤸", "Which of these words is a verb, an action word?", "Jump", ["Blue", "Table", "Happy"], "<b>Jump</b> is a verb, because it's something you can do."],
+  [3, "🅰️", "Which letters are the vowels?", "A, E, I, O, U", ["B, C, D, F, G", "L, M, N, O, P", "W, X, Y, Z, Q"], "The vowels are <b>A, E, I, O, U</b>. Sometimes Y is a vowel too!"],
+  [4, "🐘", "What do we call words that mean the same thing, like “big” and “large”?", "Synonyms", ["Antonyms", "Homophones", "Rhymes"], "Words that mean the same thing are <b>synonyms</b>. Happy and glad are synonyms."],
+  [4, "🐭", "What is the word for more than one mouse?", "Mice", ["Mouses", "Meese", "Mousies"], "One mouse, two <b>mice</b>!"],
+  [5, "👂", "What do we call words that sound the same but mean different things, like “to,” “two,” and “too”?", "Homophones", ["Synonyms", "Antonyms", "Adverbs"], "Words that sound alike but mean different things are <b>homophones</b>."],
+  [5, "🔁", "What does the beginning “re-” mean in words like “redo” and “reread”?", "Again", ["Not", "Before", "Under"], "The prefix “re-” means <b>again</b>. Redo means do again!"],
+ ]},
+ { id: "earth", name: "Weather & Earth", emoji: "🌦️", intro: "Let's explore our planet and its weather!", qs: [
+  [1, "❄️", "What falls from the clouds when it is very cold?", "Snow", ["Leaves", "Sand", "Sunshine"], "When it is very cold, <b>snow</b> falls from the clouds."],
+  [1, "🌈", "What colorful arc can you see when the sun shines through rain?", "A rainbow", ["A tornado", "A comet", "Lightning"], "Sunlight shining through raindrops makes a <b>rainbow</b>."],
+  [2, "🍂", "How many seasons are in a year?", "4", ["2", "3", "12"], "There are <b>4 seasons</b>: winter, spring, summer, and fall."],
+  [2, "🧊", "What is frozen water called?", "Ice", ["Steam", "Fog", "Mud"], "When water freezes, it becomes <b>ice</b>."],
+  [3, "🌋", "What is a mountain that can erupt with hot lava called?", "A volcano", ["A glacier", "A canyon", "An island"], "A mountain that can erupt with hot lava is a <b>volcano</b>."],
+  [3, "🌡️", "What tool measures how hot or cold it is?", "A thermometer", ["A ruler", "A compass", "A magnifying glass"], "A <b>thermometer</b> measures temperature, how hot or cold something is."],
+  [4, "🌪️", "What is a spinning column of wind that touches the ground?", "A tornado", ["A blizzard", "A drought", "An avalanche"], "A <b>tornado</b> is a spinning column of wind that reaches down to the ground."],
+  [4, "💧", "When water heats up and turns into a gas, what is it called?", "Evaporation", ["Condensation", "Erosion", "Freezing"], "When water turns into a gas and rises into the air, it's called <b>evaporation</b>."],
+  [5, "🪨", "What are the three main kinds of rock?", "Igneous, sedimentary, metamorphic", ["Hard, soft, and squishy", "Red, gray, and black", "Sand, dirt, and clay"], "The three kinds of rock are <b>igneous, sedimentary, and metamorphic</b>."],
+  [5, "☁️", "What is the blanket of air around the Earth called?", "The atmosphere", ["The crust", "The mantle", "The core"], "The air around Earth is called the <b>atmosphere</b>. It gives us air to breathe."],
+ ]},
+ { id: "plants", name: "Plants & Bugs", emoji: "🌻", intro: "Let's dig into the garden!", qs: [
+  [1, "🌱", "What do plants need to grow?", "Sunlight and water", ["Candy and juice", "Only darkness", "Loud music"], "Plants need <b>sunlight and water</b> to grow big and strong."],
+  [1, "🦋", "What does a caterpillar turn into?", "A butterfly", ["A spider", "A bee", "A ladybug"], "A caterpillar turns into a <b>butterfly</b>!"],
+  [2, "🥕", "What part of a plant grows underground and soaks up water?", "The roots", ["The petals", "The leaves", "The flowers"], "The <b>roots</b> grow underground and drink up water for the plant."],
+  [2, "🐝", "What sweet food do bees make?", "Honey", ["Jam", "Syrup", "Sugar cubes"], "Bees make <b>honey</b> from the nectar in flowers."],
+  [3, "🐜", "How many legs does an insect have?", "6", ["8", "4", "10"], "Every insect has <b>6 legs</b>. Ants, bees, and beetles are insects."],
+  [3, "🍃", "Which part of a plant makes food using sunlight?", "The leaves", ["The roots", "The stem", "The seeds"], "The <b>leaves</b> use sunlight to make food for the plant."],
+  [4, "☀️", "What is the process plants use to make food from sunlight?", "Photosynthesis", ["Hibernation", "Metamorphosis", "Migration"], "Plants make food from sunlight, water, and air. This is called <b>photosynthesis</b>."],
+  [4, "🐞", "What are the three main body parts of an insect?", "Head, thorax, abdomen", ["Head, wings, tail", "Arms, legs, feet", "Shell, horns, tail"], "An insect's three body parts are the <b>head, thorax, and abdomen</b>."],
+  [5, "🐛", "What do we call the big change from caterpillar to butterfly?", "Metamorphosis", ["Photosynthesis", "Pollination", "Evaporation"], "The change from caterpillar to butterfly is called <b>metamorphosis</b>."],
+  [5, "🌸", "When bees carry pollen from flower to flower, what is it called?", "Pollination", ["Germination", "Hibernation", "Migration"], "Carrying pollen from flower to flower is called <b>pollination</b>. It helps plants make seeds."],
+ ]},
+ { id: "maps", name: "Maps & Places", emoji: "🗺️", intro: "Grab your map! Let's travel the world.", qs: [
+  [1, "🏞️", "What is the name of our country?", "The United States of America", ["Canada", "Mexico", "France"], "We live in <b>the United States of America</b>, also called the USA."],
+  [1, "🌊", "On a map, what color usually shows water?", "Blue", ["Red", "Yellow", "Brown"], "On most maps, water like oceans and lakes is colored <b>blue</b>."],
+  [2, "🧭", "What are the four main directions on a compass?", "North, South, East, West", ["Up, Down, Left, Right", "Front, Back, Top, Bottom", "Hot, Cold, Wet, Dry"], "The four directions are <b>North, South, East, and West</b>. A silly way to remember: Never Eat Soggy Waffles!"],
+  [2, "🐳", "What is the biggest ocean on Earth?", "The Pacific Ocean", ["The Atlantic Ocean", "The Indian Ocean", "The Arctic Ocean"], "The <b>Pacific Ocean</b> is the biggest and deepest ocean."],
+  [3, "🌎", "How many continents are there?", "7", ["5", "6", "9"], "There are <b>7 continents</b>. We live on North America."],
+  [3, "🏛️", "What is the capital of the United States?", "Washington, D.C.", ["New York City", "Los Angeles", "Chicago"], "The capital of the United States is <b>Washington, D.C.</b> The President lives there in the White House."],
+  [4, "🐫", "On which continent is Egypt, home of the great pyramids?", "Africa", ["Asia", "Europe", "South America"], "Egypt and its pyramids are in <b>Africa</b>."],
+  [4, "❄️", "What is the largest country in the world?", "Russia", ["China", "Canada", "The United States"], "<b>Russia</b> is the biggest country in the world. It stretches across Europe and Asia."],
+  [5, "🏜️", "Which river is usually called the longest river in the world?", "The Nile", ["The Mississippi", "The Thames", "The Rhine"], "<b>The Nile</b> in Africa is usually called the longest river in the world."],
+  [5, "🌐", "What imaginary line goes around the middle of the Earth?", "The equator", ["The prime meridian", "The North Pole", "The Great Wall"], "The <b>equator</b> is an imaginary line around the middle of the Earth. Places near it are hot!"],
+ ]},
+ { id: "history", name: "America's Story", emoji: "🗽", intro: "Let's travel back in time!", qs: [
+  [1, "🗽", "What is the big green statue in New York that holds up a torch?", "The Statue of Liberty", ["Mount Rushmore", "The Lincoln Memorial", "The Golden Gate"], "The <b>Statue of Liberty</b> holds a torch in New York. It was a gift from France."],
+  [1, "🏳️", "What colors are on the American flag?", "Red, white, and blue", ["Green and yellow", "Orange and black", "Purple and pink"], "The American flag is <b>red, white, and blue</b>."],
+  [2, "🎩", "Who was the first President of the United States?", "George Washington", ["Abraham Lincoln", "Thomas Jefferson", "Ben Franklin"], "<b>George Washington</b> was the very first President."],
+  [2, "🎆", "Which holiday is America's birthday?", "The Fourth of July", ["Thanksgiving", "Halloween", "Labor Day"], "<b>The Fourth of July</b> is America's birthday. We celebrate with fireworks!"],
+  [3, "⭐", "How many stars are on the American flag?", "50", ["13", "48", "100"], "The flag has <b>50 stars</b>, one for each state. The 13 stripes stand for the first 13 colonies."],
+  [3, "🪙", "Which President is on the penny?", "Abraham Lincoln", ["George Washington", "Thomas Jefferson", "John Adams"], "<b>Abraham Lincoln</b> is on the penny."],
+  [4, "📜", "What paper, signed in 1776, said America was free from Britain?", "The Declaration of Independence", ["The Constitution", "The Bill of Rights", "A treasure map"], "In 1776, leaders signed the <b>Declaration of Independence</b>."],
+  [4, "✈️", "Who flew the first successful airplane in 1903?", "The Wright brothers", ["Lewis and Clark", "Thomas Edison", "Henry Ford"], "<b>The Wright brothers</b>, Orville and Wilbur, flew the first airplane in 1903."],
+  [5, "⚖️", "What are the first ten amendments to the Constitution called?", "The Bill of Rights", ["The Ten Commandments", "The Declaration", "The Pledge"], "The first ten amendments are called the <b>Bill of Rights</b>. They protect freedoms like free speech."],
+  [5, "🎤", "Who gave the famous “I Have a Dream” speech?", "Martin Luther King Jr.", ["Abraham Lincoln", "Benjamin Franklin", "George Washington"], "<b>Martin Luther King Jr.</b> gave the “I Have a Dream” speech in 1963 about fairness for all people."],
+ ]},
+ { id: "stories", name: "Storybook", emoji: "📖", intro: "Once upon a time... let's remember some stories!", qs: [
+  [1, "🐻", "In “Goldilocks and the Three Bears,” how many bears are there?", "3", ["2", "4", "7"], "There are <b>3 bears</b>: Papa Bear, Mama Bear, and Baby Bear."],
+  [1, "🌱", "What did Jack trade for the magic beans?", "A cow", ["A pig", "A horse", "A goat"], "In “Jack and the Beanstalk,” Jack traded his <b>cow</b> for magic beans."],
+  [2, "🐷", "In “The Three Little Pigs,” what was the strongest house made of?", "Bricks", ["Straw", "Sticks", "Mud"], "The house made of <b>bricks</b> was so strong the wolf couldn't blow it down."],
+  [2, "👠", "Who wore a glass slipper to the royal ball?", "Cinderella", ["Snow White", "Rapunzel", "Little Red Riding Hood"], "<b>Cinderella</b> lost her glass slipper at the ball."],
+  [3, "🐢", "In “The Tortoise and the Hare,” who won the race?", "The tortoise", ["The hare", "The fox", "It was a tie"], "<b>The tortoise</b> won! Slow and steady wins the race."],
+  [3, "🍞", "Who dropped a trail of breadcrumbs in the forest?", "Hansel and Gretel", ["Jack and Jill", "Peter Pan", "The Gingerbread Man"], "<b>Hansel and Gretel</b> dropped breadcrumbs to find their way home."],
+  [4, "🦊", "What do we call a short story that teaches a lesson, often with talking animals?", "A fable", ["A biography", "A poem", "A dictionary"], "A short story with a lesson, often with talking animals, is a <b>fable</b>."],
+  [4, "🐇", "Which girl falls down a rabbit hole into Wonderland?", "Alice", ["Dorothy", "Wendy", "Goldilocks"], "<b>Alice</b> follows a white rabbit down a hole into Wonderland."],
+  [5, "🌾", "In “The Wizard of Oz,” what did the Scarecrow want?", "A brain", ["A heart", "Courage", "A new hat"], "The Scarecrow wanted <b>a brain</b>. The Tin Man wanted a heart, and the Lion wanted courage."],
+  [5, "🕸️", "In “Charlotte's Web,” what kind of animal is Charlotte?", "A spider", ["A pig", "A goose", "A rat"], "Charlotte is a <b>spider</b> who writes words in her web to save her friend Wilbur the pig."],
+ ]},
+ { id: "ocean", name: "Ocean Life", emoji: "🐙", intro: "Let's dive deep into the ocean!", qs: [
+  [1, "🐙", "Which sea animal has eight arms?", "An octopus", ["A starfish", "A jellyfish", "A seal"], "An <b>octopus</b> has eight arms. “Octo” means eight!"],
+  [1, "🦀", "Which ocean animal has a hard shell and walks sideways?", "A crab", ["A fish", "A whale", "A seal"], "A <b>crab</b> has a hard shell and scuttles sideways."],
+  [2, "🐟", "What do fish use to breathe underwater?", "Gills", ["Lungs", "Noses", "Fins"], "Fish breathe with <b>gills</b>, which take oxygen out of the water."],
+  [2, "⭐", "How many arms do most sea stars (starfish) have?", "5", ["3", "8", "10"], "Most sea stars have <b>5 arms</b>. If one breaks off, it can grow back!"],
+  [3, "🐳", "Are whales fish or mammals?", "Mammals", ["Fish", "Reptiles", "Amphibians"], "Whales are <b>mammals</b>, like us. They come up to the surface to breathe air."],
+  [3, "🐬", "Which smart ocean animal talks with clicks and whistles?", "A dolphin", ["A shark", "A jellyfish", "A clam"], "A <b>dolphin</b> talks with clicks and whistles. Dolphins are very smart!"],
+  [4, "🦈", "What is the largest fish in the ocean?", "The whale shark", ["The great white shark", "The tuna", "The swordfish"], "The <b>whale shark</b> is the biggest fish. It's gentle and eats tiny plankton."],
+  [4, "🐠", "What are coral reefs made of?", "Tiny animals called coral", ["Rocks from volcanoes", "Seaweed", "Old shipwrecks"], "Coral reefs are built by <b>tiny animals called coral</b>."],
+  [5, "🔬", "What are the tiny drifting plants and animals that many sea creatures eat?", "Plankton", ["Barnacles", "Sponges", "Pebbles"], "<b>Plankton</b> are tiny living things that drift in the sea. Even huge whales eat them!"],
+  [5, "🌊", "About how much of Earth's surface is covered by oceans?", "About 70%", ["About 10%", "About 30%", "About 95%"], "Oceans cover <b>about 70%</b> of Earth's surface. That's why Earth looks blue from space."],
+ ]},
+ { id: "dinos", name: "Dinosaurs", emoji: "🦖", intro: "Stomp, stomp! Let's learn about dinosaurs!", qs: [
+  [1, "🦖", "Which dinosaur had tiny arms and big, sharp teeth?", "T. rex", ["Triceratops", "Stegosaurus", "Brachiosaurus"], "<b>T. rex</b> had tiny arms but huge, sharp teeth."],
+  [1, "🦕", "Which dinosaur had three horns on its face?", "Triceratops", ["T. rex", "Stegosaurus", "Velociraptor"], "<b>Triceratops</b> had three horns. “Tri” means three!"],
+  [2, "🥚", "What did baby dinosaurs hatch from?", "Eggs", ["Seeds", "Cocoons", "Bubbles"], "Baby dinosaurs hatched from <b>eggs</b>, just like baby birds."],
+  [2, "🛡️", "Which dinosaur had big plates on its back and spikes on its tail?", "Stegosaurus", ["T. rex", "Triceratops", "Brachiosaurus"], "<b>Stegosaurus</b> had plates on its back and a spiky tail."],
+  [3, "⛏️", "What do we call a scientist who studies dinosaur fossils?", "A paleontologist", ["An astronaut", "A veterinarian", "A weather reporter"], "A <b>paleontologist</b> digs up and studies fossils."],
+  [3, "🦴", "What do we call the remains of ancient living things saved in rock?", "Fossils", ["Crystals", "Gems", "Pebbles"], "Bones and prints saved in rock are called <b>fossils</b>."],
+  [4, "🏢", "Which long-necked dinosaur was taller than a four-story building?", "Brachiosaurus", ["Velociraptor", "Triceratops", "Ankylosaurus"], "<b>Brachiosaurus</b> had a super long neck to reach leaves at the tops of trees."],
+  [4, "🐦", "Which animals alive today are related to dinosaurs?", "Birds", ["Cats", "Frogs", "Fish"], "<b>Birds</b> are living relatives of dinosaurs!"],
+  [5, "☄️", "What most likely caused the dinosaurs to die out long ago?", "A giant asteroid hit Earth", ["Too much rain", "People hunted them", "They ate too much"], "Scientists think <b>a giant asteroid hit Earth</b> about 66 million years ago."],
+  [5, "🦎", "What does the word “dinosaur” mean?", "Terrible lizard", ["Big monster", "Old bird", "Giant tooth"], "“Dinosaur” means <b>terrible lizard</b>."],
+ ]},
+ /* ----- Favorites: books, sports, movies & TV ----- */
+ { id: "dragonmasters", group: "fun", name: "Dragon Masters", emoji: "🐉", intro: "Calling all Dragon Masters! Let's visit King Roland's castle.", qs: [
+  [1, "🐉", "In Dragon Masters, what is the name of Drake's dragon?", "Worm", ["Vulcan", "Shu", "Kepri"], "Drake's dragon is named <b>Worm</b>. He is an Earth Dragon!"],
+  [1, "🔥", "What kind of dragon is Vulcan, Rori's dragon?", "A Fire Dragon", ["A Water Dragon", "An Ice Dragon", "A Moon Dragon"], "Rori's dragon, Vulcan, is a <b>Fire Dragon</b>."],
+  [2, "💧", "Which Dragon Master's dragon is Shu, the Water Dragon?", "Bo", ["Drake", "Rori", "Ana"], "<b>Bo</b> is the Dragon Master of Shu, the Water Dragon."],
+  [2, "☀️", "What kind of dragon is Kepri, Ana's dragon?", "A Sun Dragon", ["A Fire Dragon", "A Lightning Dragon", "An Earth Dragon"], "Ana's dragon, Kepri, is a <b>Sun Dragon</b>."],
+  [2, "🧙", "What is the name of the wizard who teaches the Dragon Masters?", "Griffith", ["Maldred", "Merlin", "Roland"], "<b>Griffith</b> is the royal wizard. He helps the Dragon Masters learn their dragons' powers."],
+  [3, "👑", "Which king do the Dragon Masters work for?", "King Roland", ["King Arthur", "King Griffith", "King Bo"], "The Dragon Masters live and train at the castle of <b>King Roland</b>."],
+  [3, "💎", "What chose Drake to become a Dragon Master?", "The Dragon Stone", ["The king's crown", "A magic sword", "A wishing well"], "The <b>Dragon Stone</b> chose Drake to become a Dragon Master."],
+  [3, "🏰", "What is the name of the kingdom where the Dragon Masters live?", "Bracken", ["Narnia", "Camelot", "Frog Creek"], "The Dragon Masters live in the Kingdom of <b>Bracken</b>."],
+  [4, "🐍", "Petra's dragon is a Hydra with four heads. What kind of dragon is it?", "A Poison Dragon", ["An Ice Dragon", "A Gold Dragon", "A Wind Dragon"], "Petra's four-headed Hydra is a <b>Poison Dragon</b>. Its song can cure poison!"],
+  [4, "⚡", "In “Search for the Lightning Dragon,” who is the Lightning Dragon's Dragon Master?", "Carlos", ["Petra", "Mina", "Drake"], "A boy named <b>Carlos</b> is the Dragon Master of the Lightning Dragon."],
+  [4, "❄️", "In “Chill of the Ice Dragon,” what froze Mina's homeland?", "An Ice Giant", ["A Snow Dragon", "A blizzard spell", "A frozen lake"], "Mina's homeland was frozen by an <b>Ice Giant</b>. Only a fire dragon could help!"],
+  [5, "🌋", "Which evil wizard stole the gold and silver keys to free Naga, the Earthquake Dragon?", "Maldred", ["Griffith", "Roland", "Carlos"], "The evil wizard <b>Maldred</b> stole the keys to free Naga, the Earthquake Dragon."],
+  [5, "📚", "What is the very first Dragon Masters book called?", "Rise of the Earth Dragon", ["Saving the Sun Dragon", "Power of the Fire Dragon", "Curse of the Shadow Dragon"], "The first book is <b>Rise of the Earth Dragon</b>."],
+  [5, "🔺", "In “Flight of the Moon Dragon,” where do the Dragon Masters travel?", "The Land of Pyramids", ["The Frozen North", "Under the sea", "The Moon"], "They travel to the <b>Land of Pyramids</b> to find the hidden Pyramid of the Seven Dragons."],
+  [5, "💠", "In “Cave of the Crystal Dragon,” who do Drake and his friends rescue from a cave?", "Griffith", ["King Roland", "Petra", "Maldred"], "Drake and his friends rescue <b>Griffith</b> the wizard from a cave."],
+ ]},
+ { id: "galaxyzack", group: "fun", name: "Galaxy Zack", emoji: "🛸", intro: "Blast off to the planet Nebulon with Zack!", qs: [
+  [1, "🪐", "What planet does Zack Nelson move to?", "Nebulon", ["Mars", "Saturn", "Pluto"], "Zack's family moves from Earth to the planet <b>Nebulon</b>."],
+  [1, "🐶", "What is the name of Zack's dog?", "Luna", ["Rocky", "Sparky", "Max"], "Zack's dog is named <b>Luna</b>."],
+  [2, "🌎", "Which planet did Zack live on before he moved?", "Earth", ["Nebulon", "Jupiter", "Venus"], "Zack and his family lived on <b>Earth</b> before moving to Nebulon."],
+  [2, "🏫", "What is the name of Zack's new school?", "Sprockets Academy", ["Rocket Elementary", "Star School", "Galaxy High"], "Zack goes to <b>Sprockets Academy</b>."],
+  [2, "🧒", "Who is Zack's best friend on Nebulon?", "Drake", ["Bert", "Rip", "Jack"], "<b>Drake</b> is Zack's best friend on Nebulon. He helped Zack on his first day of school."],
+  [3, "🤖", "What runs the house where Zack lives on Nebulon?", "A computer called the I.R.A.", ["A robot butler named Bob", "A talking dog", "Zack's sisters"], "A computer system called the <b>I.R.A.</b> runs Zack's house."],
+  [3, "👩‍🏫", "Who is Zack's teacher at Sprockets Academy?", "Ms. Rudolph", ["Ms. Frizzle", "Mrs. Puff", "Ms. Nelson"], "Zack's teacher is <b>Ms. Rudolph</b>."],
+  [3, "💼", "Why did Zack's family move to Nebulon?", "His dad got a new job", ["They won a contest", "Earth ran out of pizza", "To find Luna"], "The Nelsons moved because <b>Zack's dad got a new job</b> on Nebulon."],
+  [4, "📅", "In what year does Zack move to Nebulon?", "2120", ["2020", "1999", "3000"], "Zack's story takes place in the year <b>2120</b>."],
+  [4, "👯", "Who else is in Zack's family besides his mom and dad?", "Twin sisters", ["Three brothers", "A baby brother", "A grandpa"], "Zack has <b>twin sisters</b>."],
+  [5, "🔤", "What does I.R.A. stand for?", "Indoor Robotic Assistant", ["Interstellar Rocket Alarm", "Ice Robot Army", "Inside Room Assistant"], "I.R.A. stands for <b>Indoor Robotic Assistant</b>."],
+  [5, "🏠", "In “Return to Earth!,” what goes wrong on Zack's trip back to Earth?", "Luna goes missing", ["Zack forgets how to fly", "Drake gets lost", "The I.R.A. breaks"], "On the trip back to Earth, <b>Luna goes missing</b> and Zack has to find her."],
+  [5, "👥", "In “Three's a Crowd!,” which friend of Zack's meets Drake?", "Bert", ["Rip", "Carlos", "Jack"], "In “Three's a Crowd!,” Zack's friend <b>Bert</b> meets Drake."],
+ ]},
+ { id: "treehouse", group: "fun", name: "Magic Tree House", emoji: "🌳", intro: "Climb up the ladder! The magic tree house is ready to go.", qs: [
+  [1, "🌳", "What are the names of the brother and sister in Magic Tree House?", "Jack and Annie", ["Hansel and Gretel", "Drake and Ana", "Rip and Nikki"], "The brother and sister are <b>Jack and Annie</b>."],
+  [1, "🦕", "In “Dinosaurs Before Dark,” where does the tree house take Jack and Annie?", "The time of the dinosaurs", ["The Moon", "A pirate ship", "Ancient Egypt"], "In the first book, the tree house takes them back to <b>the time of the dinosaurs</b>."],
+  [2, "🏡", "What town do Jack and Annie live in?", "Frog Creek", ["Stermont", "Bracken", "Nebulon"], "Jack and Annie live in <b>Frog Creek</b>, Pennsylvania."],
+  [2, "👧", "Who is older, Jack or Annie?", "Jack", ["Annie", "They are twins", "Morgan"], "<b>Jack</b> is Annie's older brother."],
+  [2, "📓", "What does Jack carry so he can write down facts?", "A notebook", ["A map", "A sword", "A telescope"], "Jack always carries a <b>notebook</b> to write down facts."],
+  [3, "🦅", "In “Dinosaurs Before Dark,” which flying reptile carries Jack to safety?", "A Pteranodon", ["A Velociraptor", "A T. rex", "A dragon"], "A <b>Pteranodon</b> swoops in and flies Jack to safety. Annie names it Henry!"],
+  [3, "🏅", "What letter is on the gold medallion Jack finds in the first book?", "M", ["J", "A", "T"], "Jack finds a gold medallion with the letter <b>M</b> on it. M is for Morgan!"],
+  [3, "🏰", "In “The Knight at Dawn,” where do Jack and Annie go?", "A castle long ago", ["A pyramid", "A pirate ship", "A space station"], "In “The Knight at Dawn,” they visit <b>a castle long ago</b> and meet a knight."],
+  [4, "🧙‍♀️", "Who does the magic tree house belong to?", "Morgan le Fay", ["Merlin", "Ms. Rudolph", "Griffith"], "The tree house belongs to <b>Morgan le Fay</b>, a magical librarian."],
+  [4, "🐫", "In “Mummies in the Morning,” which ancient land do Jack and Annie visit?", "Ancient Egypt", ["Ancient Rome", "Ancient China", "Ancient Greece"], "In “Mummies in the Morning,” they visit <b>ancient Egypt</b> and explore a pyramid."],
+  [4, "🏴‍☠️", "In “Pirates Past Noon,” what do the pirates want?", "Buried treasure", ["A lost dog", "A dinosaur egg", "A magic wand"], "The pirates want Jack and Annie to help them find <b>buried treasure</b>."],
+  [5, "📖", "How do Jack and Annie make the tree house take them somewhere?", "Point at a picture in a book and wish", ["Say a magic word", "Ring a bell", "Climb down backward"], "They <b>point at a picture in a book and wish</b> to go there!"],
+  [5, "🥷", "What is Magic Tree House book #5 about?", "Ninjas", ["Mermaids", "Robots", "Cowboys"], "Book #5 is “Night of the <b>Ninjas</b>.”"],
+ ]},
+ { id: "binderofdoom", group: "fun", name: "Binder of Doom", emoji: "👾", intro: "Shhh! It's time for the Super Secret Monster Patrol.", qs: [
+  [1, "👾", "What does the Super Secret Monster Patrol protect their town from?", "Monsters", ["Pirates", "Dinosaurs", "Aliens"], "The Super Secret Monster Patrol protects their town from <b>monsters</b>!"],
+  [1, "🧑", "Who is the leader of the Super Secret Monster Patrol?", "Alexander Bopp", ["Zack Nelson", "Jack", "Drake"], "<b>Alexander Bopp</b> leads the Super Secret Monster Patrol."],
+  [2, "🏘️", "What town do Alexander and his friends live in?", "Stermont", ["Frog Creek", "Bracken", "Adventure Bay"], "Alexander and his friends live in <b>Stermont</b>."],
+  [2, "👫", "Who are Alexander's two friends in the Monster Patrol?", "Rip and Nikki", ["Jack and Annie", "Bo and Ana", "Drake and Bert"], "<b>Rip and Nikki</b> are in the Super Secret Monster Patrol with Alexander."],
+  [3, "🎂", "What is the first Binder of Doom book called?", "Brute-Cake", ["Boa Constructor", "Speedah-Cheetah", "Hydrant-Hydra"], "The first book is <b>Brute-Cake</b>. Alexander keeps finding cake crumbs around town!"],
+  [3, "🏎️", "In “Speedah-Cheetah,” what do Alexander, Nikki, and Rip build for the Stermont Derby?", "Race cars", ["Robots", "Kites", "Tree houses"], "They build <b>race cars</b> for the Stermont Derby, but a speedy monster wants to race too!"],
+  [3, "🚧", "In “Boa Constructor,” what keeps disappearing in Stermont?", "Construction machines", ["All the cake", "Every dog", "The school bus"], "<b>Construction machines</b> keep disappearing. Then a whole playground vanishes!"],
+  [4, "🎈", "In “Hydrant-Hydra,” what does the Patrol get ready to fight a monster with?", "Water balloons", ["Snowballs", "Lasers", "Bubble gum"], "The Patrol gets <b>water balloons</b> ready, but then the town starts flooding!"],
+  [4, "🃏", "In “Brute-Cake,” what creepy cards does Alexander find around town?", "Monster cards", ["Birthday cards", "Baseball cards", "Library cards"], "Alexander finds creepy <b>monster cards</b> around town. Are the monsters back?"],
+  [4, "📚", "In “Brute-Cake,” where does Alexander go for a summer maker program?", "The library", ["The zoo", "The beach", "The bakery"], "Alexander's dad signs him up for a summer maker program at <b>the library</b>."],
+  [5, "📓", "Before the Binder of Doom, Alexander's adventures were in which series?", "The Notebook of Doom", ["The Diary of Doom", "The Folder of Fear", "The Book of Boo"], "Alexander's first adventures were in <b>The Notebook of Doom</b>."],
+  [5, "✏️", "Who writes and draws the Binder of Doom books?", "Troy Cummings", ["Tracey West", "Mary Pope Osborne", "Dav Pilkey"], "<b>Troy Cummings</b> writes and draws the Binder of Doom books."],
+ ]},
+ { id: "dinoexperts", group: "fun", name: "Dino Experts", emoji: "🦴", intro: "Only for real dinosaur experts. These are tough!", qs: [
+  [2, "🦕", "Which dinosaur's name means “three-horned face”?", "Triceratops", ["Stegosaurus", "Pachycephalosaurus", "Allosaurus"], "<b>Triceratops</b> means “three-horned face.”"],
+  [3, "🦖", "What does “Tyrannosaurus rex” mean?", "Tyrant lizard king", ["Terrible lizard", "Speedy thief", "Big tooth"], "Tyrannosaurus rex means <b>tyrant lizard king</b>."],
+  [3, "🦃", "What does “Velociraptor” mean?", "Speedy thief", ["Tyrant king", "Roof lizard", "Big claw"], "Velociraptor means <b>speedy thief</b>. Real ones were about the size of a turkey and had feathers!"],
+  [3, "🦅", "Was the Pteranodon a dinosaur?", "No, it was a flying reptile", ["Yes, a flying dinosaur", "No, it was a bird", "Yes, the fastest one"], "<b>No, it was a flying reptile</b>. Pterosaurs were cousins of the dinosaurs."],
+  [3, "⏳", "What are the three periods of the dinosaur age, in order?", "Triassic, Jurassic, Cretaceous", ["Jurassic, Triassic, Cretaceous", "Cretaceous, Jurassic, Triassic", "Stone Age, Bronze Age, Iron Age"], "The dinosaur age goes <b>Triassic, Jurassic, Cretaceous</b>."],
+  [4, "🐊", "Which giant meat-eater had a tall sail on its back and hunted fish?", "Spinosaurus", ["Allosaurus", "Iguanodon", "Ankylosaurus"], "<b>Spinosaurus</b> had a tall sail on its back and hunted fish. It was even longer than T. rex!"],
+  [4, "🔨", "Which armored dinosaur had a big bony club on the end of its tail?", "Ankylosaurus", ["Stegosaurus", "Parasaurolophus", "Diplodocus"], "<b>Ankylosaurus</b> was covered in armor and swung a bony tail club."],
+  [4, "🎺", "Which duck-billed dinosaur had a long, hollow head crest that may have made trumpet sounds?", "Parasaurolophus", ["Triceratops", "Velociraptor", "Brachiosaurus"], "<b>Parasaurolophus</b> may have blown air through its crest to make loud honking sounds."],
+  [4, "🌊", "Was the Mosasaurus a dinosaur?", "No, it was a sea reptile", ["Yes, a swimming dinosaur", "No, it was a fish", "Yes, the biggest one"], "<b>No, it was a sea reptile</b>. Mosasaurs swam in the oceans while dinosaurs walked on land."],
+  [4, "🦴", "In which period did T. rex live?", "The Cretaceous", ["The Triassic", "The Jurassic", "The Ice Age"], "T. rex lived in <b>the Cretaceous</b>, the last period of the dinosaur age."],
+  [5, "🗡️", "What is a “thagomizer”?", "The spikes on a Stegosaurus's tail", ["A dinosaur's tooth", "A fossil-digging tool", "A baby dinosaur"], "A thagomizer is <b>the spikes on a Stegosaurus's tail</b>."],
+  [5, "🥚", "Which dinosaur's name means “good mother lizard” because it cared for its babies?", "Maiasaura", ["Oviraptor", "Microraptor", "Coelophysis"], "<b>Maiasaura</b> means “good mother lizard.” Scientists found its nests full of babies."],
+  [5, "🌍", "When the first dinosaurs lived, all the land was one giant supercontinent. What was it called?", "Pangaea", ["Atlantis", "Antarctica", "Australia"], "All the land was joined in one supercontinent called <b>Pangaea</b>."],
+  [5, "🐦", "Which famous fossil animal had feathers and wings like a bird, but teeth like a dinosaur?", "Archaeopteryx", ["Pterodactyl", "Dodo", "Dimetrodon"], "<b>Archaeopteryx</b> was part bird, part dinosaur, with feathers and sharp teeth."],
+  [5, "🦕", "Which South American giant is one of the biggest dinosaurs ever found?", "Argentinosaurus", ["Compsognathus", "Velociraptor", "Iguanodon"], "<b>Argentinosaurus</b> was one of the biggest animals ever to walk on land."],
+  [5, "☄️", "About how long ago did the dinosaurs (except birds) die out?", "66 million years ago", ["6,000 years ago", "1 million years ago", "1 billion years ago"], "The dinosaurs died out about <b>66 million years ago</b>."],
+ ]},
+ { id: "soccer", group: "fun", name: "Soccer", emoji: "⚽", intro: "Lace up your cleats! It's time for soccer.", qs: [
+  [1, "🧤", "In soccer, which player is allowed to use their hands?", "The goalkeeper", ["The striker", "The referee", "Everyone"], "Only <b>the goalkeeper</b> can use their hands, and only inside the penalty box."],
+  [1, "⚽", "How many players does each soccer team have on the field?", "11", ["5", "9", "15"], "Each team has <b>11 players</b> on the field, counting the goalkeeper."],
+  [2, "🎩", "What is it called when a player scores 3 goals in one game?", "A hat trick", ["A triple play", "A slam dunk", "A home run"], "Three goals in one game is a <b>hat trick</b>!"],
+  [2, "🟨", "What color card does the referee show as a warning?", "Yellow", ["Red", "Green", "Blue"], "A <b>yellow</b> card is a warning. A red card means the player has to leave the game."],
+  [2, "🌍", "How often is the World Cup played?", "Every 4 years", ["Every year", "Every 2 years", "Every 10 years"], "The World Cup is played <b>every 4 years</b>."],
+  [3, "🏆", "Which country won the 2026 World Cup?", "Spain", ["Argentina", "France", "Brazil"], "<b>Spain</b> won the 2026 World Cup, beating Argentina 1–0 in the final!"],
+  [3, "🗺️", "Which three countries hosted the 2026 World Cup?", "USA, Canada, and Mexico", ["England, France, and Spain", "Brazil, Argentina, and Chile", "Japan, China, and Korea"], "The 2026 World Cup was hosted by the <b>USA, Canada, and Mexico</b>."],
+  [3, "⏱️", "How many minutes long is a regular pro soccer game?", "90 minutes", ["60 minutes", "45 minutes", "100 minutes"], "A pro soccer game is <b>90 minutes</b>, split into two halves of 45 minutes."],
+  [4, "🇪🇸", "In which country do FC Barcelona play?", "Spain", ["Italy", "Brazil", "England"], "FC Barcelona plays in <b>Spain</b>, in a league called La Liga."],
+  [4, "⚔️", "When Barcelona play their biggest rival, it's called “El Clásico.” Who is the rival?", "Real Madrid", ["Manchester United", "Bayern Munich", "Inter Miami"], "Barcelona's biggest rival is <b>Real Madrid</b>. Their games are called El Clásico."],
+  [4, "🐐", "Which superstar played for Barcelona for many years and won the 2022 World Cup with Argentina?", "Lionel Messi", ["Cristiano Ronaldo", "Kylian Mbappé", "Neymar"], "<b>Lionel Messi</b> played for Barcelona for 17 seasons and won the 2022 World Cup."],
+  [5, "🏟️", "What is the name of Barcelona's famous home stadium?", "Camp Nou", ["Wembley", "Santiago Bernabéu", "Old Trafford"], "Barcelona plays at <b>Camp Nou</b>, one of the biggest stadiums in the world."],
+  [5, "🌟", "Which Barcelona winger became a star for Spain when he was only 16 years old?", "Lamine Yamal", ["Lionel Messi", "Luka Modrić", "Harry Kane"], "<b>Lamine Yamal</b> became a Barcelona and Spain star at just 16 years old."],
+  [5, "🔵", "Barcelona's colors are called “blaugrana.” What colors are they?", "Blue and dark red", ["Green and white", "Black and gold", "Orange and blue"], "Blaugrana means <b>blue and dark red</b>, Barcelona's colors."],
+ ]},
+ { id: "hoops", group: "fun", name: "Hoops & Baseball", emoji: "🏀", intro: "Grab your ball and glove! Let's play.", qs: [
+  [1, "⚾", "How many strikes make an out in baseball?", "3", ["2", "4", "5"], "Three strikes and you're out! <b>3 strikes</b> make an out."],
+  [1, "🏀", "How many players does each basketball team have on the court?", "5", ["4", "9", "11"], "Each basketball team has <b>5 players</b> on the court."],
+  [2, "🏀", "How many points is a regular basket worth, inside the 3-point line?", "2", ["1", "3", "5"], "A regular basket is worth <b>2 points</b>."],
+  [2, "💎", "How many bases are there in baseball, counting home plate?", "4", ["3", "5", "6"], "There are <b>4 bases</b>: first, second, third, and home plate."],
+  [2, "🎯", "How many points is a free throw worth?", "1", ["2", "3", "0"], "A free throw is worth <b>1 point</b>."],
+  [3, "🌈", "How many points is a shot from behind the arc worth?", "3", ["2", "4", "5"], "A shot from behind the 3-point line is worth <b>3 points</b>."],
+  [3, "⚾", "How many innings are in a regular Major League Baseball game?", "9", ["5", "7", "12"], "A regular Major League game has <b>9 innings</b>."],
+  [3, "🚶", "How many balls does a batter need to walk to first base?", "4", ["3", "2", "5"], "With <b>4 balls</b>, the batter gets to walk to first base."],
+  [4, "💥", "What is a home run hit with the bases loaded called?", "A grand slam", ["A slam dunk", "A hat trick", "A triple play"], "A home run with the bases loaded is a <b>grand slam</b>. It scores 4 runs!"],
+  [4, "🗑️", "How high off the ground is a basketball hoop?", "10 feet", ["6 feet", "8 feet", "15 feet"], "A basketball hoop is <b>10 feet</b> high."],
+  [5, "📏", "How far apart are the bases in Major League Baseball?", "90 feet", ["60 feet", "100 feet", "45 feet"], "The bases are <b>90 feet</b> apart."],
+  [5, "⏲️", "In the NBA, how many seconds does a team have to take a shot?", "24 seconds", ["10 seconds", "30 seconds", "60 seconds"], "The NBA shot clock is <b>24 seconds</b>."],
+ ]},
+ { id: "baltimore", group: "fun", name: "Baltimore Teams", emoji: "🐦", intro: "Go O's! Go Ravens! Let's cheer for Baltimore.", qs: [
+  [1, "🧡", "What colors do the Baltimore Orioles wear?", "Orange and black", ["Purple and black", "Red and blue", "Green and gold"], "The Orioles wear <b>orange and black</b>."],
+  [1, "💜", "What is the main color of the Baltimore Ravens?", "Purple", ["Orange", "Green", "Red"], "The Ravens wear <b>purple</b> and black."],
+  [2, "🐦", "What kind of animal is an oriole?", "A bird", ["A fish", "A cat", "A bug"], "An oriole is a <b>bird</b>. The Baltimore oriole is orange and black, just like the team!"],
+  [2, "🏈", "What sport do the Ravens play?", "Football", ["Baseball", "Basketball", "Hockey"], "The Ravens play <b>football</b> in the NFL."],
+  [3, "🏟️", "What is the Orioles' ballpark called?", "Camden Yards", ["Fenway Park", "Wrigley Field", "Yankee Stadium"], "The Orioles play at Oriole Park at <b>Camden Yards</b>."],
+  [3, "🏈", "How many points is a touchdown worth?", "6", ["3", "7", "1"], "A touchdown is worth <b>6 points</b>. The extra kick after makes it 7!"],
+  [3, "⚡", "Which speedy Ravens quarterback won the NFL MVP award in 2019 and 2023?", "Lamar Jackson", ["Tom Brady", "Patrick Mahomes", "Josh Allen"], "<b>Lamar Jackson</b> won the NFL MVP in 2019 and 2023."],
+  [4, "🪶", "What is the name of the Ravens' costumed mascot?", "Poe", ["Ollie", "Rocky", "Talon"], "The Ravens' mascot is named <b>Poe</b>."],
+  [4, "📜", "The Ravens are named after a famous poem by which Baltimore writer?", "Edgar Allan Poe", ["Dr. Seuss", "Mark Twain", "Shel Silverstein"], "The Ravens are named after “The Raven,” a poem by <b>Edgar Allan Poe</b>."],
+  [4, "🦾", "Which Orioles legend, called “The Iron Man,” played 2,632 games in a row?", "Cal Ripken Jr.", ["Babe Ruth", "Derek Jeter", "Jackie Robinson"], "<b>Cal Ripken Jr.</b> played 2,632 games in a row, a record!"],
+  [5, "⚾", "Which famous home run hitter was born in Baltimore?", "Babe Ruth", ["Hank Aaron", "Willie Mays", "Mickey Mantle"], "<b>Babe Ruth</b> was born in Baltimore in 1895."],
+  [5, "🏟️", "What is the Ravens' stadium called?", "M&T Bank Stadium", ["Camden Yards", "Lambeau Field", "Soldier Field"], "The Ravens play at <b>M&T Bank Stadium</b>, right next to Camden Yards."],
+ ]},
+ { id: "disney", group: "fun", name: "Disney Movies", emoji: "🏰", intro: "Let's take a trip to the movies with Disney and Pixar!", qs: [
+  [1, "🐭", "What is the name of Mickey Mouse's pet dog?", "Pluto", ["Goofy", "Max", "Bolt"], "Mickey's pet dog is <b>Pluto</b>."],
+  [1, "❄️", "In “Frozen,” which sister has ice powers?", "Elsa", ["Anna", "Moana", "Rapunzel"], "<b>Elsa</b> has ice powers. Let it go!"],
+  [1, "🤠", "In “Toy Story,” what is the cowboy's name?", "Woody", ["Buzz", "Rex", "Hamm"], "The cowboy in Toy Story is <b>Woody</b>. Buzz Lightyear is the space ranger."],
+  [2, "🦁", "In “The Lion King,” what is the lion cub's name?", "Simba", ["Nala", "Mufasa", "Scar"], "The lion cub is <b>Simba</b>. His dad is Mufasa."],
+  [2, "🐠", "In “Finding Nemo,” what kind of fish is Nemo?", "A clownfish", ["A shark", "A goldfish", "A blue tang"], "Nemo is a <b>clownfish</b>. Dory is a blue tang!"],
+  [2, "🏎️", "What is the name of the red race car in “Cars”?", "Lightning McQueen", ["Mater", "Doc Hudson", "Sally"], "The red race car is <b>Lightning McQueen</b>. Ka-chow!"],
+  [3, "🌊", "In “Moana,” who is the shape-shifting demigod?", "Maui", ["Hei Hei", "Tamatoa", "Pua"], "<b>Maui</b> is the demigod with the magic fishhook."],
+  [3, "👽", "In “Lilo & Stitch,” what is Stitch's experiment number?", "626", ["101", "007", "300"], "Stitch is Experiment <b>626</b>."],
+  [3, "🎈", "In “Up,” how does Carl make his house fly?", "Thousands of balloons", ["A giant rocket", "A magic carpet", "A helicopter"], "Carl ties <b>thousands of balloons</b> to his house!"],
+  [4, "🐀", "In “Ratatouille,” Remy the rat dreams of being what?", "A chef", ["A pilot", "A singer", "A doctor"], "Remy dreams of being <b>a chef</b> in Paris."],
+  [4, "😊", "In “Inside Out,” which emotion is yellow?", "Joy", ["Sadness", "Anger", "Fear"], "<b>Joy</b> is yellow. Sadness is blue, and Anger is red."],
+  [5, "💀", "In “Coco,” on which holiday does Miguel's adventure happen?", "Day of the Dead", ["Christmas", "Halloween", "Fourth of July"], "Miguel's adventure happens on the <b>Day of the Dead</b>."],
+  [5, "🐰", "In “Zootopia,” what job does Judy Hopps have?", "Police officer", ["Doctor", "Chef", "Firefighter"], "Judy Hopps is the first bunny <b>police officer</b> in Zootopia."],
+  [5, "🦋", "In “Encanto,” which Madrigal did not get a magic gift?", "Mirabel", ["Luisa", "Isabela", "Bruno"], "<b>Mirabel</b> didn't get a gift, but she saves her family's magic!"],
+ ]},
+ { id: "jurassic", group: "fun", name: "Jurassic World", emoji: "🦖", intro: "Welcome to Jurassic World! Watch out for raptors.", qs: [
+  [1, "🦖", "In “Jurassic World,” what kind of dinosaur is Blue?", "A Velociraptor", ["A T. rex", "A Triceratops", "A Stegosaurus"], "Blue is a <b>Velociraptor</b>, the smartest raptor of her pack."],
+  [1, "🏝️", "Where is Jurassic Park built?", "On an island", ["On the Moon", "Under the ocean", "In a big city"], "Jurassic Park was built <b>on an island</b> called Isla Nublar."],
+  [2, "🤠", "Who trains Blue and the other raptors in “Jurassic World”?", "Owen Grady", ["Alan Grant", "Ian Malcolm", "John Hammond"], "<b>Owen Grady</b> trains Blue and her raptor sisters."],
+  [2, "🦟", "In “Jurassic Park,” where did scientists find dinosaur DNA?", "In mosquitoes stuck in amber", ["In dinosaur eggs", "At the bottom of the sea", "In a museum"], "The scientists found dinosaur DNA <b>in mosquitoes stuck in amber</b>."],
+  [3, "🧬", "What was the made-up hybrid dinosaur that escaped in “Jurassic World”?", "Indominus rex", ["Indoraptor", "Spinosaurus", "Giganotosaurus"], "The <b>Indominus rex</b> was a made-up hybrid dinosaur, and it escaped!"],
+  [3, "👴", "Who created Jurassic Park?", "John Hammond", ["Owen Grady", "Alan Grant", "Ian Malcolm"], "<b>John Hammond</b> created Jurassic Park."],
+  [3, "🌊", "Which giant sea reptile leaps out of the water to eat a shark in “Jurassic World”?", "The Mosasaurus", ["The T. rex", "Blue", "The Pteranodon"], "<b>The Mosasaurus</b> leaps out of the water to gobble up a shark!"],
+  [4, "🎬", "Who directed the first “Jurassic Park” movie in 1993?", "Steven Spielberg", ["George Lucas", "Walt Disney", "Chris Pratt"], "<b>Steven Spielberg</b> directed the first Jurassic Park."],
+  [4, "🌋", "In “Jurassic World: Fallen Kingdom,” what puts the island's dinosaurs in danger?", "An erupting volcano", ["A giant flood", "A snowstorm", "An earthquake"], "<b>An erupting volcano</b> threatens the dinosaurs on the island."],
+  [4, "🗣️", "Which Jurassic Park character says, “Life, uh, finds a way”?", "Ian Malcolm", ["John Hammond", "Owen Grady", "Claire Dearing"], "<b>Ian Malcolm</b> says “Life, uh, finds a way.”"],
+  [5, "👠", "Who runs the park in “Jurassic World” and outruns a T. rex in high heels?", "Claire Dearing", ["Ellie Sattler", "Maisie Lockwood", "Zia Rodriguez"], "<b>Claire Dearing</b> runs the park, and she outruns a T. rex in high heels!"],
+  [5, "🦖", "Which giant meat-eater is the big villain dinosaur in “Jurassic World Dominion”?", "Giganotosaurus", ["Indominus rex", "Spinosaurus", "Allosaurus"], "The <b>Giganotosaurus</b> is the big villain dinosaur in Dominion."],
+  [5, "🎥", "Which actress stars in “Jurassic World Rebirth” (2025)?", "Scarlett Johansson", ["Bryce Dallas Howard", "Laura Dern", "Zendaya"], "<b>Scarlett Johansson</b> stars in Jurassic World Rebirth."],
+ ]},
+ { id: "starwars", group: "fun", name: "Star Wars", emoji: "⚔️", intro: "A long time ago, in a galaxy far, far away...", qs: [
+  [1, "🟢", "What color is Yoda?", "Green", ["Blue", "Purple", "Orange"], "Yoda is <b>green</b>, and he is a wise Jedi Master."],
+  [1, "⚔️", "What is the glowing sword of a Jedi called?", "A lightsaber", ["A laser bat", "A star stick", "A blaster"], "A Jedi's glowing sword is a <b>lightsaber</b>."],
+  [2, "✨", "Finish the saying: “May the ___ be with you.”", "Force", ["Wind", "Light", "Sun"], "“May the <b>Force</b> be with you.”"],
+  [2, "🐻", "What kind of creature is Chewbacca?", "A Wookiee", ["An Ewok", "A Jawa", "A Hutt"], "Chewbacca is a <b>Wookiee</b>, a tall and hairy creature."],
+  [2, "🤖", "Which droid is short, round, and talks in beeps?", "R2-D2", ["C-3PO", "K-2SO", "IG-11"], "<b>R2-D2</b> is the short droid who beeps and whistles."],
+  [2, "🧒", "Who is Darth Vader's son?", "Luke Skywalker", ["Han Solo", "Obi-Wan Kenobi", "Boba Fett"], "<b>Luke Skywalker</b> is Darth Vader's son!"],
+  [3, "🚀", "What is the name of Han Solo's ship?", "The Millennium Falcon", ["The Death Star", "The X-Wing", "The Razor Crest"], "Han Solo flies <b>the Millennium Falcon</b>."],
+  [3, "🌅", "Which desert planet with two suns is Luke's home?", "Tatooine", ["Hoth", "Endor", "Naboo"], "Luke grew up on <b>Tatooine</b>, a desert planet with two suns."],
+  [3, "👶", "In “The Mandalorian,” what is the real name of the little green child called “Baby Yoda”?", "Grogu", ["Yoda Jr.", "Gizmo", "Groot"], "His real name is <b>Grogu</b>."],
+  [4, "🌑", "What is the giant space station that can destroy whole planets?", "The Death Star", ["The Millennium Falcon", "Cloud City", "The Star Destroyer"], "<b>The Death Star</b> can destroy whole planets."],
+  [4, "👸", "Which planet did Princess Leia grow up on?", "Alderaan", ["Tatooine", "Hoth", "Dagobah"], "Princess Leia grew up on <b>Alderaan</b>."],
+  [5, "❄️", "On which icy planet do the rebels hide in “The Empire Strikes Back”?", "Hoth", ["Tatooine", "Endor", "Mustafar"], "The rebels hide on the ice planet <b>Hoth</b>."],
+  [5, "🧙", "Who was Luke's first Jedi teacher?", "Obi-Wan Kenobi", ["Yoda", "Qui-Gon Jinn", "Mace Windu"], "<b>Obi-Wan Kenobi</b> was Luke's first Jedi teacher. Later Yoda trained him too."],
+  [5, "🔴", "What are the evil Force users who use the dark side called?", "The Sith", ["The Jedi", "The Rebels", "The Ewoks"], "Evil Force users are called <b>the Sith</b>. Darth Vader is a Sith Lord."],
+ ]},
+ { id: "movienight", group: "fun", name: "Movie Night", emoji: "🍿", intro: "Grab the popcorn! It's movie night.", qs: [
+  [1, "🏠", "In “Home Alone,” what is the name of the boy left at home?", "Kevin", ["Harry", "Buzz", "Marv"], "The boy is <b>Kevin</b> McCallister."],
+  [2, "🦹", "What are the names of the two burglars in “Home Alone”?", "Harry and Marv", ["Bert and Ernie", "Mario and Luigi", "Jack and Annie"], "The burglars are <b>Harry and Marv</b>, the Wet Bandits."],
+  [3, "🗽", "In “Home Alone 2,” which city does Kevin end up in by himself?", "New York City", ["Chicago", "Paris", "Miami"], "Kevin ends up alone in <b>New York City</b>."],
+  [4, "✈️", "In the first “Home Alone,” where was Kevin's family flying for their vacation?", "Paris", ["London", "Hawaii", "Florida"], "Kevin's family flew to <b>Paris</b> and left him at home!"],
+  [2, "🎃", "In “The Nightmare Before Christmas,” what is Jack Skellington called?", "The Pumpkin King", ["The Skeleton Prince", "Santa's Helper", "The Ghost King"], "Jack Skellington is <b>the Pumpkin King</b> of Halloween Town."],
+  [3, "👻", "What is the name of Jack Skellington's ghost dog?", "Zero", ["Spooky", "Bones", "Casper"], "Jack's ghost dog is <b>Zero</b>. His nose glows like a jack-o'-lantern!"],
+  [4, "🎅", "What does Jack Skellington call Santa Claus?", "Sandy Claws", ["Santa Paws", "Mister Christmas", "Jolly Jack"], "Jack calls Santa <b>Sandy Claws</b>."],
+  [2, "💚", "In “Wicked,” what color is Elphaba's skin?", "Green", ["Blue", "Purple", "Pink"], "Elphaba has <b>green</b> skin."],
+  [3, "👑", "In “Wicked,” which witch floats in to Munchkinland inside a giant bubble?", "Glinda", ["Elphaba", "Nessarose", "Madame Morrible"], "<b>Glinda</b> travels in a giant pink bubble!"],
+  [4, "🏫", "In “Wicked,” what school do Elphaba and Glinda go to?", "Shiz University", ["Hogwarts", "Sprockets Academy", "Monsters University"], "Elphaba and Glinda meet at <b>Shiz University</b>."],
+  [5, "🧹", "What song does Elphaba sing as she flies up on her broom at the end of the first “Wicked” movie?", "Defying Gravity", ["Let It Go", "Popular", "How Far I'll Go"], "Elphaba sings <b>Defying Gravity</b> as she flies away!"],
+  [3, "👽", "In “Project Hail Mary,” what is the name of the alien friend?", "Rocky", ["Grogu", "Stitch", "Zero"], "Ryland Grace's alien friend is named <b>Rocky</b>. Fist my bump!"],
+  [4, "🧪", "In “Project Hail Mary,” what was Ryland Grace's job before he went to space?", "A science teacher", ["A pilot", "A chef", "A firefighter"], "Ryland Grace was <b>a science teacher</b> before his space mission."],
+  [5, "☀️", "In “Project Hail Mary,” what are the tiny space germs that are eating the Sun's energy called?", "Astrophage", ["Midichlorians", "Plankton", "Gremlins"], "Tiny space germs called <b>Astrophage</b> are dimming the Sun."],
+  [5, "⭐", "In “Project Hail Mary,” which nearby star does Ryland Grace's ship travel to?", "Tau Ceti", ["The North Star", "Tatooine", "The Moon"], "Ryland's ship, the Hail Mary, travels to the star <b>Tau Ceti</b>."],
+ ]},
+ { id: "cartoons", group: "fun", name: "Cartoon Crew", emoji: "🍌", intro: "Minions, Mario, and the PAW Patrol are on the way!", qs: [
+  [1, "🍌", "What food do the Minions love most?", "Bananas", ["Pizza", "Carrots", "Cookies"], "Minions go bananas for <b>bananas</b>!"],
+  [1, "🍄", "In the Super Mario Bros. movies, who is Mario's brother?", "Luigi", ["Wario", "Toad", "Yoshi"], "Mario's brother is <b>Luigi</b>."],
+  [1, "🐕", "Who is the boy leader of the PAW Patrol?", "Ryder", ["Chase", "Kevin", "Jack"], "<b>Ryder</b> is the leader of the PAW Patrol."],
+  [1, "🚓", "Which PAW Patrol pup is the police pup?", "Chase", ["Marshall", "Rubble", "Zuma"], "<b>Chase</b> is the police pup. Chase is on the case!"],
+  [2, "😈", "Which villain do the Minions work for in “Despicable Me”?", "Gru", ["Bowser", "Darth Vader", "Mayor Humdinger"], "The Minions work for <b>Gru</b>."],
+  [2, "🐢", "In “The Super Mario Bros. Movie,” who is the big spiky villain?", "Bowser", ["Donkey Kong", "Toad", "Luigi"], "<b>Bowser</b> is the spiky villain who wants to take over the Mushroom Kingdom."],
+  [2, "🚒", "Which PAW Patrol pup is the firefighter Dalmatian?", "Marshall", ["Chase", "Skye", "Rocky"], "<b>Marshall</b> is the firefighter pup. He's a Dalmatian!"],
+  [3, "🚁", "Which PAW Patrol pup flies a helicopter?", "Skye", ["Zuma", "Rubble", "Everest"], "<b>Skye</b> flies the PAW Patrol helicopter. This pup's gotta fly!"],
+  [3, "🏙️", "What town does the PAW Patrol protect?", "Adventure Bay", ["Stermont", "Frog Creek", "Halloween Town"], "The PAW Patrol protects <b>Adventure Bay</b>."],
+  [3, "🧸", "In “Minions,” which Minion carries a teddy bear named Tim?", "Bob", ["Kevin", "Stuart", "Dave"], "<b>Bob</b> is the little Minion with the teddy bear, Tim."],
+  [4, "🦄", "Which of Gru's daughters loves unicorns?", "Agnes", ["Margo", "Edith", "Lucy"], "<b>Agnes</b> loves unicorns. “It's so fluffy!”"],
+  [4, "👑", "Which princess rules the Mushroom Kingdom in “The Super Mario Bros. Movie”?", "Princess Peach", ["Princess Daisy", "Princess Leia", "Princess Elsa"], "<b>Princess Peach</b> rules the Mushroom Kingdom."],
+  [5, "🌌", "In “The Super Mario Galaxy Movie” (2026), which space princess joins the adventure?", "Rosalina", ["Daisy", "Pauline", "Peach"], "<b>Rosalina</b>, the princess of the stars, joins the adventure."],
+  [5, "🐾", "Finish the PAW Patrol saying: “No job is too big, no pup is too ___!”", "Small", ["Fast", "Silly", "Sleepy"], "“No job is too big, no pup is too <b>small</b>!”"],
+ ]},
+];
+
+const LEVELS = [
+  { id: "little", name: "1st–2nd grade", sub: "Little learners", range: [1, 2] },
+  { id: "middle", name: "2nd–4th grade", sub: "Getting Kids", range: [2, 4] },
+  { id: "big",    name: "4th–5th grade", sub: "Big kids", range: [4, 5] },
+  { id: "all",    name: "All grades",    sub: "1st up to 5th", range: [1, 5] },
+];
+const TOPICS = [
+  { id: "mix",    name: "Mix it up",    sub: "School stuff and favorites" },
+  { id: "school", name: "School stuff", sub: "Science, math, words, and more" },
+  { id: "fun",    name: "Favorites",    sub: "Books, sports, movies, and TV" },
+];
+const VALUES = [100, 200, 300, 400, 500];
+const COLORS = ["c0", "c1", "c2", "c3", "c4"];
+const CHEERS = ["Great job!", "You got it!", "Super smart!", "Awesome!", "Way to go!", "Kids!"];
+const COMFORT = ["Nice try!", "Good guess!", "So close!", "Keep going!"];
+const DEFAULT_NAMES = ["Player 1", "Player 2", "Player 3", "Player 4"];
+
+/* ===== Saved settings (this device only) ===== */
+function load(key, fallback) { try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : fallback; } catch (e) { return fallback; } }
+function save(key, val) { try { localStorage.setItem(key, JSON.stringify(val)); } catch (e) {} }
+
+let prefs = Object.assign({ count: 1, names: DEFAULT_NAMES.slice(), level: "all", read: true, bot: false, botLevel: "medium", topics: "mix" }, load("bb-prefs", {}));
+
+/* ===== Computer player ===== */
+const BOT_NAME = "Robo";
+const BOT_LEVELS = [
+  { id: "easy",   name: "Easy",   sub: "Robo makes lots of mistakes", acc: 0.45 },
+  { id: "medium", name: "Medium", sub: "A fair match",                acc: 0.68 },
+  { id: "hard",   name: "Hard",   sub: "Robo is super smart",         acc: 0.9 },
+];
+const botLevel = () => BOT_LEVELS.find((l) => l.id === prefs.botLevel) || BOT_LEVELS[1];
+// Harder squares (higher rows) are harder for Robo too
+const botGetsIt = (row) => Math.random() < botLevel().acc - row * 0.05;
+const isBot = (p) => !!(p && p.bot);
+const nameTag = (p) => (isBot(p) ? "🤖 " : "") + esc(p.name);
+
+let botTimer = null, botToken = 0;
+function botWait(ms, fn) { clearTimeout(botTimer); const t = ++botToken; botTimer = setTimeout(() => { if (t === botToken) fn(); }, ms); }
+function botCancel() { clearTimeout(botTimer); botToken++; }
+// Give the kid time to hear the question before Robo answers
+const readTime = (text) => (prefs.read && canSpeak ? Math.max(3200, plain(text).length * 80) : 2600);
+let seen = new Set(load("bb-seen", []));
+
+/* ===== Game state ===== */
+let S = null; // { screen, players, cols, star, turn, lesson, lessonIdx, final }
+
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const plain = (s) => s.replace(/<[^>]+>/g, "");
+const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
+function shuffle(a) { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+
+function q(catId, idx) {
+  const cat = BANK.find((c) => c.id === catId);
+  const [g, e, text, a, w, f] = cat.qs[idx];
+  return { cat, g, e, text, a, w, f, key: catId + "-" + idx };
+}
+
+/* Pick the 5 questions for a category, easiest (100) to hardest (500). */
+function pickClues(cat, range) {
+  const [lo, hi] = range;
+  const used = new Set();
+  const out = [];
+  for (let i = 0; i < 5; i++) {
+    const target = lo + (hi - lo) * (i / 4);
+    let best = -1, bestScore = Infinity;
+    cat.qs.forEach((item, idx) => {
+      if (used.has(idx)) return;
+      const score = Math.abs(item[0] - target) + (seen.has(cat.id + "-" + idx) ? 0.75 : 0) + Math.random() * 0.2;
+      if (score < bestScore) { bestScore = score; best = idx; }
+    });
+    used.add(best);
+    out.push(best);
+  }
+  return out.sort((a, b) => cat.qs[a][0] - cat.qs[b][0]);
+}
+
+const gameLevel = () => LEVELS.find((l) => l.id === prefs.level) || LEVELS[3];
+const fitsTopics = (c) => prefs.topics === "mix" || (prefs.topics === "fun") === (c.group === "fun");
+
+/* Five categories that haven't been used yet this game. Mix = at least 2 of each kind. */
+function chooseCats(usedIds) {
+  const avail = BANK.filter((c) => !usedIds.includes(c.id) && fitsTopics(c));
+  if (prefs.topics !== "mix") return shuffle(avail).slice(0, 5);
+  const school = shuffle(avail.filter((c) => c.group !== "fun"));
+  const fun = shuffle(avail.filter((c) => c.group === "fun"));
+  const rest = shuffle(school.slice(2).concat(fun.slice(2)));
+  return shuffle(school.slice(0, 2).concat(fun.slice(0, 2), rest[0]));
+}
+function buildCols(cats, mult) {
+  return cats.map((cat) => ({
+    cat: cat.id,
+    clues: pickClues(cat, gameLevel().range).map((idx, r) => ({ idx, value: VALUES[r] * mult, done: false, ok: null })),
+  }));
+}
+/* Daily Double squares go in different columns, never in the top (easiest) row. */
+function placeStars(n) {
+  return shuffle([0, 1, 2, 3, 4]).slice(0, n).map((c) => ({ c, r: 1 + Math.floor(Math.random() * 4) }));
+}
+
+function newGame() {
+  const level = gameLevel();
+  const boardCats = chooseCats([]);
+  // Final question: hardest available in a category not on the board
+  const finalCat = pick(BANK.filter((c) => !boardCats.includes(c) && fitsTopics(c)));
+  const fIdx = pickClues(finalCat, [level.range[1], level.range[1]])[0];
+  S = {
+    screen: "lesson",
+    round: 1,
+    players: prefs.names.slice(0, prefs.count).map((n, i) => ({ name: (n || "").trim() || DEFAULT_NAMES[i], score: 0 }))
+      .concat(prefs.bot ? [{ name: BOT_NAME, score: 0, bot: true }] : []),
+    cols: buildCols(boardCats, 1),
+    past: [],
+    stars: placeStars(1),
+    turn: 0,
+    lessonIdx: 0,
+    final: { cat: finalCat.id, idx: fIdx, step: 0, player: 0, wagers: [], answers: [] },
+  };
+}
+
+/* Double Jeopardy: new topics, double values, two Daily Double squares. Lowest score picks first. */
+function startDoubleRound() {
+  const used = S.cols.map((c) => c.cat).concat(S.final.cat);
+  S.past = S.past.concat(S.cols);
+  S.cols = buildCols(chooseCats(used), 2);
+  S.stars = placeStars(2);
+  S.round = 2;
+  const low = Math.min(...S.players.map((p) => p.score));
+  S.turn = S.players.findIndex((p) => p.score === low);
+  startLesson();
+}
+
+/* ===== Speech & sound ===== */
+const canSpeak = "speechSynthesis" in window && "SpeechSynthesisUtterance" in window;
+function speak(text) {
+  if (!canSpeak) return;
+  try {
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(plain(text));
+    u.rate = 0.9; u.pitch = 1.05;
+    speechSynthesis.speak(u);
+  } catch (e) {}
+}
+function hush() { if (canSpeak) try { speechSynthesis.cancel(); } catch (e) {} }
+
+let actx = null;
+function tone(freqs, dur = 0.14, type = "triangle", gap = 0.11) {
+  try {
+    actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+    if (actx.state === "suspended") actx.resume();
+    freqs.forEach((f, i) => {
+      const o = actx.createOscillator(), g = actx.createGain();
+      const t = actx.currentTime + i * gap;
+      o.type = type; o.frequency.value = f;
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.exponentialRampToValueAtTime(0.25, t + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+      o.connect(g); g.connect(actx.destination); o.start(t); o.stop(t + dur + 0.02);
+    });
+  } catch (e) {}
+}
+const sndRight = () => tone([523, 659, 784, 1047], 0.18);
+const sndWrong = () => tone([330, 262], 0.25, "sine", 0.18);
+const sndTap = () => tone([660], 0.07);
+const sndStar = () => tone([784, 988, 1175, 1568, 1175, 1568], 0.12, "square", 0.08);
+
+/* ===== Confetti ===== */
+const reduceMotion = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+function confetti(n = 120) {
+  if (reduceMotion) return;
+  const cv = $("confetti"), ctx = cv.getContext("2d");
+  const W = cv.width = innerWidth, H = cv.height = innerHeight;
+  const cols = ["#FFC83D", "#FF6B57", "#3CCB7F", "#4CB8FF", "#FF7FC8", "#FFFFFF"];
+  const parts = Array.from({ length: n }, () => ({
+    x: W / 2 + (Math.random() - 0.5) * W * 0.3, y: H * 0.45, vx: (Math.random() - 0.5) * 16, vy: -Math.random() * 16 - 6,
+    s: 6 + Math.random() * 8, c: pick(cols), r: Math.random() * 6, vr: (Math.random() - 0.5) * 0.4,
+  }));
+  let frames = 0;
+  (function step() {
+    ctx.clearRect(0, 0, W, H);
+    parts.forEach((p) => {
+      p.vy += 0.45; p.x += p.vx; p.y += p.vy; p.r += p.vr; p.vx *= 0.99;
+      ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.r); ctx.fillStyle = p.c; ctx.fillRect(-p.s / 2, -p.s / 4, p.s, p.s / 2); ctx.restore();
+    });
+    if (++frames < 150) requestAnimationFrame(step); else ctx.clearRect(0, 0, W, H);
+  })();
+}
+
+/* ===== Screens ===== */
+function show(screen) {
+  hush();
+  botCancel();
+  ["home", "lesson", "board", "final"].forEach((s) => { $("scr-" + s).hidden = s !== screen; });
+  $("modal").hidden = true;
+  if (S) S.screen = screen;
+  window.scrollTo(0, 0);
+}
+
+/* ----- Home ----- */
+function renderHome() {
+  $("player-count").innerHTML = [1, 2, 3, 4].map((n) =>
+    `<button type="button" class="chip round" data-n="${n}" aria-pressed="${prefs.count === n}">${n}</button>`).join("");
+  $("names").innerHTML = Array.from({ length: prefs.count }, (_, i) =>
+    `<input id="name-${i}" type="text" maxlength="14" autocomplete="off" aria-label="Player ${i + 1} name" placeholder="${DEFAULT_NAMES[i]}" value="${esc(prefs.names[i] === DEFAULT_NAMES[i] ? "" : prefs.names[i] || "")}">`).join("");
+  $("levels").innerHTML = LEVELS.map((l) =>
+    `<button type="button" class="chip" data-level="${l.id}" aria-pressed="${prefs.level === l.id}">${l.name}<small>${l.sub}</small></button>`).join("");
+  $("read-toggle").setAttribute("aria-pressed", String(prefs.read && canSpeak));
+  $("read-toggle").hidden = !canSpeak;
+  $("topics").innerHTML = TOPICS.map((t) =>
+    `<button type="button" class="chip" data-topic="${t.id}" aria-pressed="${prefs.topics === t.id}">${t.name}<small>${t.sub}</small></button>`).join("");
+  $("bot-toggle").setAttribute("aria-pressed", String(prefs.bot));
+  $("bot-levels").hidden = !prefs.bot;
+  $("bot-levels").innerHTML = BOT_LEVELS.map((l) =>
+    `<button type="button" class="chip" data-bot="${l.id}" aria-pressed="${prefs.botLevel === l.id}">${l.name}<small>${l.sub}</small></button>`).join("");
+}
+$("topics").addEventListener("click", (e) => {
+  const b = e.target.closest("[data-topic]"); if (!b) return;
+  readNames(); prefs.topics = b.dataset.topic; save("bb-prefs", prefs); renderHome(); sndTap();
+});
+$("bot-toggle").addEventListener("click", () => { readNames(); prefs.bot = !prefs.bot; save("bb-prefs", prefs); renderHome(); sndTap(); });
+$("bot-levels").addEventListener("click", (e) => {
+  const b = e.target.closest("[data-bot]"); if (!b) return;
+  readNames(); prefs.botLevel = b.dataset.bot; save("bb-prefs", prefs); renderHome(); sndTap();
+});
+function readNames() {
+  for (let i = 0; i < prefs.count; i++) {
+    const el = $("name-" + i);
+    if (el) prefs.names[i] = el.value.trim() || DEFAULT_NAMES[i];
+  }
+  save("bb-prefs", prefs);
+}
+$("player-count").addEventListener("click", (e) => {
+  const b = e.target.closest("[data-n]"); if (!b) return;
+  readNames(); prefs.count = +b.dataset.n; save("bb-prefs", prefs); renderHome(); sndTap();
+});
+$("levels").addEventListener("click", (e) => {
+  const b = e.target.closest("[data-level]"); if (!b) return;
+  prefs.level = b.dataset.level; save("bb-prefs", prefs); renderHome(); sndTap();
+});
+$("read-toggle").addEventListener("click", () => { prefs.read = !prefs.read; save("bb-prefs", prefs); renderHome(); sndTap(); });
+$("go-lesson").addEventListener("click", () => { readNames(); newGame(); startLesson(); });
+$("go-play").addEventListener("click", () => { readNames(); newGame(); startBoard(); });
+
+/* ----- Lesson ----- */
+function lessonCards() {
+  const cards = [];
+  S.cols.forEach((col, ci) => {
+    const cat = BANK.find((c) => c.id === col.cat);
+    cards.push({ type: "intro", ci, cat });
+    col.clues.forEach((cl) => cards.push({ type: "fact", ci, cat, item: q(col.cat, cl.idx) }));
+  });
+  if (S.round !== 2) cards.push({ type: "final", item: q(S.final.cat, S.final.idx) });
+  cards.push({ type: "ready" });
+  return cards;
+}
+function startLesson(fromBoard) {
+  S.lessonFromBoard = !!fromBoard;
+  if (!fromBoard) S.lessonIdx = 0;
+  show("lesson");
+  $("lesson-title").textContent = S.round === 2 ? "Double Jeopardy Lesson" : "Lesson Time";
+  $("lesson-skip").textContent = fromBoard ? "Back to the board ▶" : "I'm ready to play ▶";
+  renderLesson();
+}
+function renderLesson() {
+  const cards = lessonCards();
+  const i = Math.max(0, Math.min(S.lessonIdx, cards.length - 1));
+  S.lessonIdx = i;
+  const c = cards[i];
+  $("lesson-bar").style.width = Math.round((i / (cards.length - 1)) * 100) + "%";
+  let html = "", say = "";
+  if (c.type === "intro") {
+    html = `<span class="cat-pill ${COLORS[c.ci]}">Topic ${c.ci + 1} of 5</span>
+      <div class="pic" aria-hidden="true">${c.cat.emoji}</div>
+      <h3>${esc(c.cat.name)}</h3>
+      <p class="fact">${esc(c.cat.intro)}</p>`;
+    say = c.cat.name + ". " + c.cat.intro;
+  } else if (c.type === "fact") {
+    html = `<span class="cat-pill ${COLORS[c.ci]}">${c.cat.emoji} ${esc(c.cat.name)}</span>
+      <div class="pic" aria-hidden="true">${c.item.e}</div>
+      <p class="fact">${c.item.f}</p>
+      <p class="peek">On the board you might see: <strong>${esc(c.item.text)}</strong></p>`;
+    say = c.item.f;
+  } else if (c.type === "final") {
+    html = `<span class="cat-pill c1">⭐ Final Jeopardy sneak peek</span>
+      <div class="pic" aria-hidden="true">${c.item.e}</div>
+      <p class="fact">${c.item.f}</p>
+      <p class="peek">This one is saved for the very last question. Try to remember it!</p>`;
+    say = "Final Jeopardy sneak peek! " + c.item.f;
+  } else {
+    html = `<div class="pic" aria-hidden="true">🎉</div>
+      <h3>You're ready!</h3>
+      <p class="fact">You learned ${cards.filter((x) => x.type === "fact" || x.type === "final").length} facts. Now let's see how many you remember.</p>`;
+    say = "You're ready! Now let's see how many you remember.";
+  }
+  $("lesson-card").innerHTML = html;
+  $("lesson-card").dataset.say = say;
+  $("lesson-back").disabled = i === 0;
+  $("lesson-back").style.visibility = i === 0 ? "hidden" : "visible";
+  const last = i === cards.length - 1;
+  $("lesson-next").textContent = last ? (S.lessonFromBoard ? "Back to the board ▶" : "Let's play! ▶") : "Next ▶";
+  $("lesson-next").classList.toggle("green", last);
+  $("lesson-speak").hidden = !canSpeak;
+  if (prefs.read) speak(say); else hush();
+}
+$("lesson-next").addEventListener("click", () => {
+  const total = lessonCards().length;
+  sndTap();
+  if (S.lessonIdx >= total - 1) startBoard(); else { S.lessonIdx++; renderLesson(); }
+});
+$("lesson-back").addEventListener("click", () => { sndTap(); S.lessonIdx--; renderLesson(); });
+$("lesson-speak").addEventListener("click", () => speak($("lesson-card").dataset.say || ""));
+$("lesson-skip").addEventListener("click", startBoard);
+
+/* ----- Board ----- */
+function startBoard() { show("board"); renderBoard(); }
+function renderBoard() {
+  const multi = S.players.length > 1;
+  $("scores").innerHTML = S.players.map((p, i) =>
+    `<div class="score ${multi && i === S.turn ? "turn" : ""}"><span>${nameTag(p)}</span><span class="pts">${p.score}</span></div>`).join("");
+  const now = S.players[S.turn], botTurn = isBot(now);
+  $("round-tag").textContent = S.round === 2 ? "Double Jeopardy · Double points!" : "Round 1";
+  $("round-tag").classList.toggle("double", S.round === 2);
+  $("turn-line").textContent = botTurn ? `🤖 ${now.name} is picking a square…` : multi ? `${now.name}, pick a square!` : "Pick a square!";
+  $("board").innerHTML = S.cols.map((col, ci) => {
+    const cat = BANK.find((c) => c.id === col.cat);
+    return `<div class="col">
+      <div class="cat-head ${COLORS[ci]}"><span class="e" aria-hidden="true">${cat.emoji}</span><span class="n">${esc(cat.name)}</span></div>
+      ${col.clues.map((cl, ri) => cl.done
+        ? `<button type="button" class="tile done" disabled aria-label="${esc(cat.name)} ${cl.value}, done">${cl.ok ? "✓" : "·"}</button>`
+        : `<button type="button" class="tile" data-c="${ci}" data-r="${ri}" aria-label="${esc(cat.name)} for ${cl.value}">${cl.value}</button>`).join("")}
+    </div>`;
+  }).join("");
+  $("quit").textContent = "🏠 Home";
+  delete $("quit").dataset.armed;
+  $("board").classList.toggle("locked", botTurn);
+  if (botTurn) botWait(1500, botPickSquare);
+}
+function botPickSquare() {
+  const open = [];
+  S.cols.forEach((col, ci) => col.clues.forEach((cl, ri) => { if (!cl.done) open.push({ ci, ri }); }));
+  if (!open.length) return;
+  // Hard Robo goes for the big points first; the others pick at random
+  let choice = pick(open);
+  if (prefs.botLevel === "hard") { const top = Math.max(...open.map((o) => o.ri)); choice = pick(open.filter((o) => o.ri === top)); }
+  const tile = $("board").querySelector(`.tile[data-c="${choice.ci}"][data-r="${choice.ri}"]`);
+  if (tile) tile.classList.add("bot-pick");
+  sndTap();
+  botWait(900, () => openClue(choice.ci, choice.ri));
+}
+$("board").addEventListener("click", (e) => {
+  const t = e.target.closest(".tile[data-c]"); if (!t) return;
+  openClue(+t.dataset.c, +t.dataset.r);
+});
+$("review").addEventListener("click", () => startLesson(true));
+$("quit").addEventListener("click", () => {
+  const b = $("quit");
+  if (b.dataset.armed) { S = null; show("home"); renderHome(); return; }
+  b.dataset.armed = "1"; b.textContent = "Tap again to quit";
+  setTimeout(() => { if (b.dataset.armed) { delete b.dataset.armed; b.textContent = "🏠 Home"; } }, 3000);
+});
+
+/* ----- Clue ----- */
+let current = null;
+function openClue(ci, ri) {
+  const col = S.cols[ci], cl = col.clues[ri];
+  const item = q(col.cat, cl.idx);
+  const isStar = S.stars.some((s) => s.c === ci && s.r === ri);
+  current = { ci, ri, item, isStar, value: cl.value * (isStar ? 2 : 1), order: shuffle([item.a, ...item.w]) };
+  const multi = S.players.length > 1;
+  $("clue").innerHTML = `
+    <div class="clue-top"><span class="cat-pill ${COLORS[ci]}">${item.cat.emoji} ${esc(item.cat.name)}</span><span class="val">${current.value} points</span></div>
+    ${isStar ? `<div class="star-banner">⭐ Daily Double! Double points! ⭐</div>` : ""}
+    ${multi ? `<div class="who">${nameTag(S.players[S.turn])}'s turn</div>` : ""}
+    <p class="q" id="clue-q">${esc(item.text)}</p>
+    <div class="choices" id="choices">
+      ${current.order.map((c, i) => `<button type="button" class="choice" data-i="${i}"><span class="k">${"ABCD"[i]}</span><span>${esc(c)}</span></button>`).join("")}
+    </div>
+    <div id="clue-result"></div>
+    <div class="clue-actions" id="clue-actions">
+      ${canSpeak ? `<button type="button" class="btn alt small" id="clue-speak">🔊 Read to me</button>` : ""}
+    </div>`;
+  $("modal").hidden = false;
+  if (isStar) sndStar(); else sndTap();
+  const sayQ = () => speak(item.text + " " + current.order.map((c, i) => "ABCD"[i] + ". " + c + ".").join(" "));
+  if ($("clue-speak")) $("clue-speak").onclick = sayQ;
+  if (prefs.read) setTimeout(sayQ, isStar ? 700 : 150);
+  $("choices").onclick = (e) => { const b = e.target.closest(".choice"); if (b && !current.answered) answer(+b.dataset.i); };
+  if (isBot(S.players[S.turn])) {
+    $("choices").classList.add("locked");
+    $("clue-result").innerHTML = `<div class="thinking">🤖 ${esc(BOT_NAME)} is thinking<i>.</i><i>.</i><i>.</i></div>`;
+    const sayText = item.text + " " + current.order.join(" ");
+    botWait(readTime(sayText) + (isStar ? 700 : 0), () => {
+      const right = current.order.indexOf(item.a);
+      const i = botGetsIt(ri) ? right : pick([0, 1, 2, 3].filter((j) => j !== right));
+      $("choices").children[i].classList.add("bot-pick");
+      botWait(900, () => answer(i));
+    });
+    return;
+  }
+  const first = $("clue").querySelector(".choice"); if (first) first.focus({ preventScroll: true });
+}
+function answer(i) {
+  current.answered = true;
+  const picked = current.order[i], ok = picked === current.item.a;
+  const cl = S.cols[current.ci].clues[current.ri];
+  cl.done = true; cl.ok = ok; cl.by = S.turn;
+  const player = S.players[S.turn], bot = isBot(player);
+  if (!bot) { seen.add(current.item.key); save("bb-seen", [...seen]); }
+  if (ok) player.score += current.value;
+  $("choices").querySelectorAll(".choice").forEach((b, j) => {
+    b.disabled = true;
+    if (current.order[j] === current.item.a) b.classList.add("right");
+    else if (j === i) b.classList.add("wrong");
+    else b.classList.add("dim");
+  });
+  const multi = S.players.length > 1;
+  const head = bot ? (ok ? `${BOT_NAME} got it!` : `${BOT_NAME} missed it!`) : ok ? pick(CHEERS) : pick(COMFORT);
+  const sub = ok ? `+${current.value} points${multi ? " for " + esc(player.name) : ""}!` : `The answer is <b>${esc(current.item.a)}</b>.`;
+  $("clue-result").innerHTML = `<div class="result ${ok ? "ok" : "no"}"><h3>${bot ? "🤖 " : ok ? "🎉 " : "💡 "}${head}</h3><p>${sub}</p><p>${current.item.f}</p></div>`;
+  $("clue-actions").innerHTML = `<button type="button" class="btn green" id="clue-done">Back to the board ▶</button>`;
+  $("clue-done").onclick = closeClue;
+  $("clue-done").focus({ preventScroll: true });
+  if (ok) { sndRight(); if (!bot) confetti(current.isStar ? 220 : 110); } else sndWrong();
+  if (prefs.read) speak(head + " " + (ok ? "" : "The answer is " + current.item.a + ". ") + plain(current.item.f));
+}
+function closeClue() {
+  hush();
+  botCancel();
+  $("modal").hidden = true;
+  S.turn = (S.turn + 1) % S.players.length;
+  current = null;
+  const left = S.cols.some((c) => c.clues.some((cl) => !cl.done));
+  if (left) renderBoard(); else if (S.round === 1) startRoundBreak(); else startFinal();
+}
+
+/* ----- Between rounds: Double Jeopardy or straight to the Final Jeopardy ----- */
+function startRoundBreak() { show("final"); S.screen = "break"; renderRoundBreak(); }
+function renderRoundBreak() {
+  const multi = S.players.length > 1;
+  const ranked = S.players.slice().sort((a, b) => b.score - a.score);
+  const top = ranked[0].score;
+  $("final-card").innerHTML = `<div class="trophy" aria-hidden="true">🎉</div><h2>Round 1 done!</h2>
+    ${multi
+      ? `<div class="podium">${ranked.map((r) => `<div class="row ${r.score === top ? "win" : ""}"><span aria-hidden="true">${r.score === top ? "🥇" : "⭐"}</span><span class="nm">${nameTag(r)}</span><span class="pts">${r.score}</span></div>`).join("")}</div>`
+      : `<p>You have <strong>${S.players[0].score}</strong> points!</p>`}
+    <p>What's next?</p>
+    <div class="next-choices">
+      <button type="button" class="next-choice" id="go-double">
+        <b>Double Jeopardy ▶</b><span>New topics, every square is worth double, and 2 Daily Double squares!</span>
+      </button>
+      <button type="button" class="next-choice alt" id="go-final">
+        <b>Final Jeopardy ⭐</b><span>Skip ahead to the last question.</span>
+      </button>
+    </div>`;
+  $("go-double").onclick = () => { sndTap(); startDoubleRound(); };
+  $("go-final").onclick = () => { sndTap(); startFinal(); };
+  if (prefs.read) speak("Round 1 is done! Do you want to play the Double Jeopardy, or go to the Final Jeopardy?");
+}
+
+/* ----- Final Jeopardy ----- */
+function startFinal() { S.final.step = 0; S.final.player = 0; S.final.wagers = []; S.final.answers = []; S.final.order = null; show("final"); renderFinal(); }
+function wagerOptions(sc) {
+  const opts = sc > 0
+    ? [{ v: 0, t: "Keep my points safe" }, { v: Math.max(100, Math.round(sc / 200) * 100), t: "Bet about half" }, { v: sc, t: "Bet it all!" }]
+    : [{ v: 500, t: "Free try!" }];
+  const seenV = new Set();
+  return opts.filter((o) => (seenV.has(o.v) ? false : seenV.add(o.v)));
+}
+function botWager(sc, opts) {
+  if (sc <= 0) return opts[0];
+  if (prefs.botLevel === "easy") return pick(opts);
+  const best = Math.max(0, ...S.players.filter((p) => !isBot(p)).map((p) => p.score));
+  if (prefs.botLevel === "hard") return sc > best * 2 ? opts[0] : sc <= best ? opts[opts.length - 1] : opts[Math.min(1, opts.length - 1)];
+  return opts[Math.min(1, opts.length - 1)];
+}
+function renderFinal() {
+  const F = S.final, item = q(F.cat, F.idx), card = $("final-card");
+  const multi = S.players.length > 1;
+  if (F.step === 0) {
+    card.innerHTML = `<div class="trophy" aria-hidden="true">⭐</div><h2>The Final Jeopardy!</h2>
+      <p>One last question about <strong>${item.cat.emoji} ${esc(item.cat.name)}</strong>. First, choose how many points to bet.</p>
+      <button type="button" class="btn big" id="f-go">Let's do it! ▶</button>`;
+    $("f-go").onclick = () => { F.step = 1; renderFinal(); };
+    if (prefs.read) speak("The Final Jeopardy! One last question about " + item.cat.name + ". First, choose how many points to bet.");
+    return;
+  }
+  const p = S.players[F.player], bot = isBot(p);
+  if (F.step === 1) {
+    const sc = p.score, opts = wagerOptions(sc);
+    const choose = (o) => { F.wagers[F.player] = { v: o.v, free: sc <= 0 }; F.step = 2; sndTap(); renderFinal(); };
+    if (bot) {
+      card.innerHTML = `<h2>🤖 ${esc(p.name)}'s bet</h2><p>${esc(p.name)} has <strong>${sc}</strong> points.</p>
+        <div class="thinking">Choosing a bet<i>.</i><i>.</i><i>.</i></div>`;
+      const o = botWager(sc, opts);
+      botWait(1800, () => {
+        card.querySelector(".thinking").textContent = `${p.name} bets ${o.v}!`;
+        if (prefs.read) speak(p.name + " bets " + o.v + "!");
+        botWait(1600, () => choose(o));
+      });
+      return;
+    }
+    card.innerHTML = `<h2>${multi ? esc(p.name) + ", place your bet" : "Place your bet"}</h2>
+      <p>You have <strong>${sc}</strong> points. If you're right, you win your bet. If you miss, you lose it.</p>
+      <div class="wagers">${opts.map((o) => `<button type="button" class="btn ${o.v === sc && sc > 0 ? "" : "alt"}" data-v="${o.v}">${o.t} (${o.v})</button>`).join("")}</div>
+      ${sc > 0 ? "" : `<p class="note">No points yet? This one is a free try. You can't lose anything!</p>`}`;
+    card.querySelector(".wagers").onclick = (e) => {
+      const b = e.target.closest("[data-v]"); if (!b) return;
+      choose(opts.find((o) => o.v === +b.dataset.v));
+    };
+    if (prefs.read) speak((multi ? p.name + ", " : "") + "place your bet. You have " + sc + " points.");
+    return;
+  }
+  if (F.step === 2) {
+    const order = F.order || (F.order = shuffle([item.a, ...item.w]));
+    card.innerHTML = `<span class="cat-pill">${item.cat.emoji} ${esc(item.cat.name)} · ${multi ? nameTag(p) + " · " : ""}bet ${F.wagers[F.player].v}</span>
+      <p class="q" id="clue-q">${esc(item.text)}</p>
+      <div class="choices" id="f-choices">${order.map((c, i) => `<button type="button" class="choice" data-i="${i}"><span class="k">${"ABCD"[i]}</span><span>${esc(c)}</span></button>`).join("")}</div>
+      <div id="f-result" style="width:100%"></div><div class="clue-actions" id="f-actions">${canSpeak ? `<button type="button" class="btn alt small" id="f-speak">🔊 Read to me</button>` : ""}</div>`;
+    const sayText = item.text + " " + order.map((c, i) => "ABCD"[i] + ". " + c + ".").join(" ");
+    const sayQ = () => speak(sayText);
+    if ($("f-speak")) $("f-speak").onclick = sayQ;
+    if (prefs.read) setTimeout(sayQ, 150);
+    const finalAnswer = (i) => {
+      if (F.answers[F.player] !== undefined) return;
+      const ok = order[i] === item.a, w = F.wagers[F.player];
+      F.answers[F.player] = ok;
+      if (ok) p.score += w.v; else if (!w.free) p.score -= w.v;
+      $("f-choices").querySelectorAll(".choice").forEach((x, j) => {
+        x.disabled = true;
+        if (order[j] === item.a) x.classList.add("right"); else if (j === i) x.classList.add("wrong"); else x.classList.add("dim");
+      });
+      const head = bot ? (ok ? `${p.name} got it!` : `${p.name} missed it!`) : ok ? pick(CHEERS) : pick(COMFORT);
+      $("f-result").innerHTML = `<div class="result ${ok ? "ok" : "no"}"><h3>${bot ? "🤖 " : ok ? "🎉 " : "💡 "}${head}</h3>
+        <p>${ok ? `+${w.v} points!` : w.free || w.v === 0 ? "No points lost." : `−${w.v} points.`}</p><p>${item.f}</p></div>`;
+      const more = F.player < S.players.length - 1;
+      $("f-actions").innerHTML = `<button type="button" class="btn green" id="f-next">${more ? `${nameTag(S.players[F.player + 1])}'s turn ▶` : "See who won! 🏆"}</button>`;
+      $("f-next").onclick = () => { hush(); botCancel(); if (more) { F.player++; F.step = 1; } else F.step = 3; renderFinal(); };
+      if (ok) { sndRight(); if (!bot) confetti(160); } else sndWrong();
+      if (prefs.read) speak(head + " " + (ok ? "" : "The answer is " + item.a + ". ") + plain(item.f));
+    };
+    if (bot) {
+      $("f-choices").classList.add("locked");
+      $("f-result").innerHTML = `<div class="thinking">🤖 ${esc(p.name)} is thinking<i>.</i><i>.</i><i>.</i></div>`;
+      botWait(readTime(sayText), () => {
+        const right = order.indexOf(item.a);
+        const i = botGetsIt(4) ? right : pick([0, 1, 2, 3].filter((j) => j !== right));
+        $("f-choices").children[i].classList.add("bot-pick");
+        botWait(900, () => finalAnswer(i));
+      });
+    } else {
+      $("f-choices").onclick = (e) => { const b = e.target.closest(".choice"); if (b) finalAnswer(+b.dataset.i); };
+    }
+    return;
+  }
+  // step 3: results
+  const allCols = S.past.concat(S.cols), boardTotal = allCols.length * 5;
+  const rightBy = (i) => allCols.reduce((n, c) => n + c.clues.filter((cl) => cl.ok && cl.by === i).length, 0);
+  const ranked = S.players.map((pl, i) => ({ ...pl, i, right: rightBy(i) })).sort((a, b) => b.score - a.score);
+  const top = ranked[0].score;
+  const winners = ranked.filter((r) => r.score === top);
+  const botWon = winners.length === 1 && isBot(winners[0]);
+  const title = !multi ? "Great game!" : winners.length > 1 ? "It's a tie!" : `${esc(winners[0].name)} wins!`;
+  card.innerHTML = `<div class="trophy" aria-hidden="true">${botWon ? "🤖" : "🏆"}</div><h2>${title}</h2>
+    ${!multi ? `<p>You finished with <strong>${S.players[0].score}</strong> points and got <strong>${ranked[0].right} of ${boardTotal}</strong> board questions right!</p>` : ""}
+    ${botWon ? `<p>Robo won this time. Play again and see if you can beat Robo!</p>` : ""}
+    ${multi ? `<div class="podium">${ranked.map((r) => `<div class="row ${r.score === top ? "win" : ""}"><span aria-hidden="true">${r.score === top ? "🥇" : "⭐"}</span><span class="nm">${nameTag(r)}<small>${r.right} board questions right</small></span><span class="pts">${r.score}</span></div>`).join("")}</div>` : ""}
+    <div class="clue-actions">
+      <button type="button" class="btn big" id="again">📚 New game</button>
+      <button type="button" class="btn alt" id="home">🏠 Home</button>
+    </div>`;
+  $("again").onclick = () => { newGame(); startLesson(); };
+  $("home").onclick = () => { S = null; show("home"); renderHome(); };
+  if (!botWon) { confetti(260); tone([523, 659, 784, 1047, 784, 1047], 0.2, "triangle", 0.14); }
+  if (prefs.read) speak(plain(title) + (!multi ? " You finished with " + S.players[0].score + " points." : botWon ? " Play again and see if you can beat Robo!" : ""));
+}
+
+/* ===== Boot (keeps a game in progress across page updates) ===== */
+function start(data) {
+  renderHome();
+  if (data && data.S && data.S.cols) {
+    S = data.S;
+    // Games saved before the Double Jeopardy existed
+    S.round = S.round || 1; S.past = S.past || []; S.stars = S.stars || (S.star ? [S.star] : []);
+    if (S.screen === "lesson") { show("lesson"); renderLesson(); }
+    else if (S.screen === "break") startRoundBreak();
+    else if (S.screen === "final") { show("final"); renderFinal(); }
+    else startBoard();
+  } else show("home");
+}
+window.claude?.hot?.snapshot?.(() => ({ S }));
+window.claude?.hot?.ready ? window.claude.hot.ready(start) : start(window.claude?.hot?.data ?? {});
+</script>
+
+</body>
+</html>
