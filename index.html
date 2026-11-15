@@ -103,7 +103,11 @@ h1, h2, h3 { font-family: var(--font-display); font-weight: 700; text-transform:
 .chip[aria-pressed="true"] { background: var(--gold); color: var(--line); box-shadow: 0 4px 0 var(--line); }
 .chip[aria-pressed="true"] small { color: var(--line); }
 .chip.round { min-width: 52px; align-items: center; }
-.names { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; }
+.names { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 190px), 1fr)); gap: 10px; }
+.pl { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.roles { display: flex; gap: 6px; }
+.chip.mini { flex: 1; align-items: center; font-size: .95rem; padding: 5px 8px 4px; }
+.chip.static { flex: none; cursor: default; background: var(--blue-deep); }
 .names input {
   width: 100%; box-sizing: border-box; font: inherit; font-size: 1.1rem; color: var(--line);
   border: 3px solid var(--line); border-radius: 8px; padding: 8px 12px; background: var(--white);
@@ -221,6 +225,16 @@ h1, h2, h3 { font-family: var(--font-display); font-weight: 700; text-transform:
 .thinking i:nth-child(2) { animation-delay: .2s; } .thinking i:nth-child(3) { animation-delay: .4s; }
 @keyframes blink { 0%, 100% { opacity: .2; } 50% { opacity: 1; } }
 .clue-actions { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; }
+/* Grown-up questions in the Family game: say it out loud, reveal, then judge */
+.grown-tag { align-self: center; font-family: var(--font-display); font-weight: 600; text-transform: uppercase; letter-spacing: .05em; font-size: .95rem; color: var(--soft); border: 2px solid var(--soft); border-radius: 6px; padding: 2px 10px 1px; }
+.say-hint { text-align: center; color: var(--soft); font-size: 1.05rem; margin: 0; }
+.answer-box { border: 3px solid var(--line); border-radius: 10px; background: var(--blue-deep); padding: 12px 16px; text-align: center; display: flex; flex-direction: column; gap: 4px; }
+.answer-box small { color: var(--soft); font-family: var(--font-display); text-transform: uppercase; letter-spacing: .05em; font-size: .95rem; }
+.answer-box b { font-family: var(--font-display); font-weight: 700; text-transform: uppercase; font-size: clamp(1.6rem, 4.5vw, 2.4rem); color: var(--gold); text-shadow: 2px 2px 0 var(--line); overflow-wrap: anywhere; }
+.btn.red { background: var(--wrong); color: var(--white); }
+/* Kid trying the grown-up question for triple points */
+.btn.boost { background: #FF7A1A; color: var(--line); }
+.star-banner.boost { background: #FF7A1A; }
 
 /* ---------- FINAL & END ---------- */
 .center-card { background: var(--blue); color: var(--white); border: 4px solid var(--line); border-radius: 14px; box-shadow: 0 8px 0 var(--line);
@@ -254,6 +268,10 @@ h1, h2, h3 { font-family: var(--font-display); font-weight: 700; text-transform:
       <div class="panel">
         <h2>Who's playing?</h2>
         <div class="chips" id="player-count" role="group" aria-label="Number of players"></div>
+        <button class="toggle" id="family-toggle" type="button" aria-pressed="false">
+          <span class="knob" aria-hidden="true"></span>
+          <span><b>👪 Family game</b><span class="t">Kids and grown-ups share one board. Grown-ups get grown-up questions!</span></span>
+        </button>
         <div class="names" id="names"></div>
         <button class="toggle" id="bot-toggle" type="button" aria-pressed="false">
           <span class="knob" aria-hidden="true"></span>
@@ -263,7 +281,7 @@ h1, h2, h3 { font-family: var(--font-display); font-weight: 700; text-transform:
       </div>
       <div class="panel">
         <h2>How tricky?</h2>
-        <p class="hint">Easy questions are worth 100. The hardest are worth 500.</p>
+        <p class="hint" id="level-hint">Easy questions are worth 100. The hardest are worth 500.</p>
         <div class="chips" id="levels" role="group" aria-label="Grade level"></div>
         <button class="toggle" id="read-toggle" type="button" aria-pressed="true">
           <span class="knob" aria-hidden="true"></span>
@@ -272,8 +290,9 @@ h1, h2, h3 { font-family: var(--font-display); font-weight: 700; text-transform:
       </div>
       <div class="panel">
         <h2>Topics</h2>
-        <p class="hint">Favorites are books, sports, movies, and TV.</p>
+        <p class="hint" id="topics-hint">Favorites are books, sports, movies, and TV.</p>
         <div class="chips" id="topics" role="group" aria-label="Topics"></div>
+        <div class="chips" id="fam-topics" hidden></div>
       </div>
     </div>
     <div class="start-row">
@@ -469,6 +488,42 @@ const BANK = [
   [5, "🦎", "What does the word “dinosaur” mean?", "Terrible lizard", ["Big monster", "Old bird", "Giant tooth"], "“Dinosaur” means <b>terrible lizard</b>."],
  ]},
  /* ----- Favorites: books, sports, movies & TV ----- */
+ { id: "food", name: "Yummy Food", emoji: "🍕", intro: "Time to eat! Let's learn about yummy food.", qs: [
+  [1, "🍎", "“An ___ a day keeps the doctor away.” Which fruit finishes the saying?", "Apple", ["Banana", "Grape", "Lemon"], "“An <b>apple</b> a day keeps the doctor away!”"],
+  [1, "🥛", "Which drink comes from cows?", "Milk", ["Orange juice", "Lemonade", "Apple juice"], "<b>Milk</b> comes from cows. It helps build strong bones."],
+  [2, "🥕", "Which orange vegetable grows under the ground and is a bunny's favorite snack?", "Carrot", ["Broccoli", "Corn", "Peas"], "<b>Carrots</b> grow under the ground. Bunnies love to munch them!"],
+  [2, "🍞", "Bread, pasta, and cereal are made mostly from which kind of food?", "Grains", ["Fruits", "Meats", "Dairy"], "Bread, pasta, and cereal are made from <b>grains</b> like wheat, oats, and rice."],
+  [3, "🍕", "Pizza first came from which country?", "Italy", ["Mexico", "China", "France"], "Pizza comes from <b>Italy</b>. The city of Naples is famous for it."],
+  [3, "🍫", "Chocolate is made from the beans of which plant?", "Cacao", ["Coffee", "Vanilla", "Peanut"], "Chocolate is made from <b>cacao</b> beans. They grow in big pods on cacao trees."],
+  [4, "🍅", "Scientists call a tomato which kind of food, because it grows from a flower and has seeds inside?", "A fruit", ["A vegetable", "A grain", "A nut"], "To scientists, a tomato is a <b>fruit</b> because it grows from a flower and has seeds."],
+  [4, "🥜", "Peanuts aren't really nuts! They are in the same plant family as beans and peas. What are they called?", "Legumes", ["Berries", "Grains", "Roots"], "Peanuts are <b>legumes</b>, like beans and peas. They grow underground!"],
+  [5, "🍯", "Which sweet food almost never spoils? Jars thousands of years old were found in Egyptian tombs!", "Honey", ["Bread", "Cheese", "Jelly"], "<b>Honey</b> almost never spoils. Jars thousands of years old were found in ancient Egyptian tombs!"],
+  [5, "🍣", "Sushi is a famous food from which country?", "Japan", ["China", "Italy", "Mexico"], "Sushi comes from <b>Japan</b>. It is made with rice, often with fish or vegetables."],
+ ]},
+ { id: "myths", name: "Myths & Legends", emoji: "🦄", intro: "Gods, heroes, and magical creatures! Let's hear some old stories.", qs: [
+  [1, "🦄", "Which make-believe horse has one horn on its head?", "A unicorn", ["A dragon", "A zebra", "A mermaid"], "A <b>unicorn</b> is a make-believe horse with one horn."],
+  [1, "🐉", "Which make-believe creature is a giant flying lizard that can breathe fire?", "A dragon", ["A mermaid", "A troll", "A fairy"], "A <b>dragon</b> breathes fire in lots of stories, like Dragon Masters!"],
+  [2, "🧜", "Which sea creature is half person and half fish?", "A mermaid", ["A centaur", "A troll", "A giant"], "A <b>mermaid</b> is half person and half fish. Ariel is a mermaid!"],
+  [2, "🐴", "What was the name of the flying horse with wings in Greek myths?", "Pegasus", ["Hercules", "Medusa", "Zeus"], "<b>Pegasus</b> was a horse with wings in the Greek myths."],
+  [3, "⚡", "Who was the king of the Greek gods, who threw lightning bolts?", "Zeus", ["Hades", "Apollo", "Poseidon"], "<b>Zeus</b> was the king of the Greek gods. He threw lightning bolts!"],
+  [3, "💪", "Which Greek hero was famous for being super strong?", "Hercules", ["Achilles", "Perseus", "Odysseus"], "<b>Hercules</b> was the strongest hero in the Greek myths. Disney even made a movie about him!"],
+  [4, "🐍", "Which monster in Greek myths had snakes for hair?", "Medusa", ["The Minotaur", "The Cyclops", "The Sphinx"], "<b>Medusa</b> had snakes for hair. One look at her turned people to stone!"],
+  [4, "🌊", "Who was the Greek god of the sea?", "Poseidon", ["Zeus", "Hermes", "Ares"], "<b>Poseidon</b> was the Greek god of the sea. He carried a three-pointed spear called a trident."],
+  [5, "🔨", "In Norse myths, which god of thunder carried a magic hammer?", "Thor", ["Loki", "Odin", "Zeus"], "<b>Thor</b> was the Norse god of thunder. His hammer was named Mjolnir."],
+  [5, "👁️", "In Greek myths, what kind of giant had only one eye?", "A Cyclops", ["A Titan", "A centaur", "A satyr"], "A <b>Cyclops</b> was a giant with one eye in the middle of its forehead."],
+ ]},
+ { id: "arts", name: "Art & Music", emoji: "🎨", intro: "Grab a paintbrush and tune up! Let's learn about art and music.", qs: [
+  [1, "🎨", "Which color do you get when you mix blue and yellow?", "Green", ["Purple", "Orange", "Brown"], "Blue and yellow make <b>green</b>!"],
+  [1, "🥁", "Which instrument do you play by hitting it with sticks?", "A drum", ["A flute", "A guitar", "A trumpet"], "You play a <b>drum</b> by hitting it with sticks."],
+  [2, "🖍️", "Red, yellow, and blue are called the ___ colors.", "Primary", ["Secondary", "Rainbow", "Cool"], "Red, yellow, and blue are the <b>primary</b> colors. You can mix them to make other colors."],
+  [2, "🎹", "Which instrument has black and white keys?", "A piano", ["A violin", "A drum", "A harp"], "A <b>piano</b> has black and white keys."],
+  [3, "🖼️", "Which famous painting shows a woman with a mysterious smile?", "The Mona Lisa", ["The Starry Night", "The Scream", "Water Lilies"], "The <b>Mona Lisa</b>, painted by Leonardo da Vinci, has a famous mysterious smile."],
+  [3, "🎻", "Which instrument has four strings and is played with a bow, tucked under your chin?", "A violin", ["A cello", "A guitar", "A banjo"], "You play a <b>violin</b> with a bow while holding it under your chin."],
+  [4, "🌌", "Which artist painted “The Starry Night”?", "Vincent van Gogh", ["Pablo Picasso", "Leonardo da Vinci", "Claude Monet"], "<b>Vincent van Gogh</b> painted “The Starry Night” in 1889."],
+  [4, "🎹", "How many keys does a regular piano have?", "88", ["52", "100", "64"], "A regular piano has <b>88</b> keys: 52 white and 36 black."],
+  [5, "🎼", "Which famous composer kept writing music even after he went deaf?", "Beethoven", ["Mozart", "Bach", "Chopin"], "<b>Beethoven</b> kept writing music even after he lost his hearing."],
+  [5, "⛪", "Michelangelo painted the ceiling of which famous chapel?", "The Sistine Chapel", ["Westminster Abbey", "Notre-Dame", "The White House"], "Michelangelo painted the ceiling of the <b>Sistine Chapel</b> in Vatican City."],
+ ]},
  { id: "dragonmasters", group: "fun", name: "Dragon Masters", emoji: "🐉", intro: "Calling all Dragon Masters! Let's visit King Roland's castle.", qs: [
   [1, "🐉", "In Dragon Masters, what is the name of Drake's dragon?", "Worm", ["Vulcan", "Shu", "Kepri"], "Drake's dragon is named <b>Worm</b>. He is an Earth Dragon!"],
   [1, "🔥", "What kind of dragon is Vulcan, Rori's dragon?", "A Fire Dragon", ["A Water Dragon", "An Ice Dragon", "A Moon Dragon"], "Rori's dragon, Vulcan, is a <b>Fire Dragon</b>."],
@@ -674,6 +729,928 @@ const BANK = [
  ]},
 ];
 
+/* ===== Grown-up question bank (Family game) =====
+   Copied from the grown-up Jeopardy practice game. Each: [clue, answer]. Grown-ups say the answer out loud, then judge themselves. */
+const GROWN = {
+ "History": [
+  ["This treaty ended World War I and imposed harsh penalties on Germany","Treaty of Versailles"],
+  ["The assassination of this Archduke in Sarajevo sparked World War I","Franz Ferdinand"],
+  ["This ancient wonder was located in Alexandria, Egypt","The Lighthouse of Alexandria"],
+  ["The Defenestration of Prague in 1618 helped trigger this major European conflict","Thirty Years War"],
+  ["This Byzantine emperor codified Roman law in the 6th century","Justinian"],
+  ["The Meiji Restoration ended this feudal military government in Japan","Shogunate"],
+  ["This British act of 1765 taxed printed materials in the American colonies","Stamp Act"],
+  ["Hannibal crossed these mountains with elephants to attack Rome","Alps"],
+  ["This 1054 event split Christianity into Eastern Orthodox and Roman Catholic","Great Schism"],
+  ["The ancient city of Rome was founded along this river","Tiber"],
+  ["This English king had six wives and broke from the Catholic Church","Henry VIII"],
+  ["The Great Fire of London occurred in this specific year","1666"],
+  ["This Carthaginian general's father made him swear eternal hatred of Rome","Hannibal Barca"],
+  ["The Magna Carta was signed at this meadow near Windsor","Runnymede"],
+  ["This French queen was executed by guillotine in 1793","Marie Antoinette"],
+  ["The Rosetta Stone allowed scholars to decipher this ancient writing system","Egyptian hieroglyphics"],
+  ["This 1494 treaty divided newly discovered lands between Spain and Portugal","Treaty of Tordesillas"],
+  ["The Peloponnesian War was fought between Athens and this city-state","Sparta"],
+  ["This Roman emperor reportedly fiddled while Rome burned","Nero"],
+  ["The Battle of Hastings in 1066 was won by this Norman duke","William the Conqueror"],
+  ["This event in 1929 is also called Black Tuesday","Stock Market Crash"],
+  ["The Sepoy Mutiny of 1857 occurred in this British colony","India"],
+  ["This Prussian statesman unified Germany in 1871","Otto von Bismarck"],
+  ["The Diet of Worms put this religious reformer on trial in 1521","Martin Luther"],
+  ["This battle in 1815 marked Napoleon's final defeat","Waterloo"],
+  ["The Tet Offensive occurred during this war","Vietnam War"],
+  ["This Spanish conquistador conquered the Aztec Empire","Hernan Cortes"],
+  ["The Hundred Years War was primarily fought between England and this country","France"],
+  ["This ancient Greek historian is called the 'Father of History'","Herodotus"],
+  ["The Trail of Tears forced relocation of this Native American nation","Cherokee"],
+  ["This Chinese dynasty built most of the Great Wall","Ming Dynasty"],
+  ["The Camp David Accords were signed by Israel and this country","Egypt"],
+  ["This 1773 act gave the British East India Company a monopoly on tea sales","Tea Act"],
+  ["The Congress of Vienna followed the defeat of this French leader","Napoleon"],
+  ["This ancient library was considered the largest of the ancient world","Library of Alexandria"],
+  ["This 1648 treaty ended the Thirty Years' War and established the principle of state sovereignty","Peace of Westphalia"],
+  ["Long before Donald Trump, this president was the first to serve two non-consecutive terms","Grover Cleveland"],
+  ["Hammurabi issued his famous code of laws as king of this ancient Mesopotamian city-state","Babylon"],
+  ["The Opium Wars were fought between China and this European power","Britain"],
+  ["This Soviet leader's policy of 'glasnost' promoted openness in government","Mikhail Gorbachev"],
+  ["The Zimmermann Telegram proposed a military alliance between Germany and this country","Mexico"],
+  ["This 1884-85 conference divided Africa among European colonial powers","Berlin Conference"],
+  ["The storming of this Paris prison on July 14, 1789 began the French Revolution","Bastille"],
+  ["This Roman general defeated Hannibal Barca at the Battle of Zama in 202 BC","Scipio Africanus"],
+  ["The first permanent English settlement in the Americas, founded in 1607","Jamestown"],
+  ["This Portuguese explorer was the first European to reach India by sailing around Africa","Vasco da Gama"],
+  ["This Japanese admiral planned and executed the attack on Pearl Harbor","Isoroku Yamamoto"],
+  ["The first woman elected to the U.S. Congress, she voted against both World Wars","Jeannette Rankin"],
+  ["This Byzantine empress wielded co-equal power alongside her husband Justinian I","Theodora"],
+  ["The Tokugawa Shogunate governed Japan from this city, now known as Tokyo","Edo"],
+  ["This 1683 battle near Austria's capital permanently halted Ottoman expansion into Central Europe","Battle of Vienna"],
+  ["This Mongol ruler destroyed Baghdad in 1258, ending the Abbasid Caliphate","Hulagu Khan"],
+  ["The Missouri Compromise of 1820 was signed into law by this U.S. President","James Monroe"],
+  ["This 1942 forced march of American and Filipino prisoners remains one of WWII's most notorious war crimes","Bataan Death March"],
+  ["This 1571 naval engagement near Greece ended Ottoman supremacy in the western Mediterranean","Battle of Lepanto"],
+  ["The Reconquista ended in 1492 when Ferdinand and Isabella captured this last Moorish kingdom","Granada"],
+  ["The Haitian Revolution produced this distinction: the first successful slave revolt creating an independent nation","Haiti"],
+  ["This Confederate general earned his nickname at the First Battle of Bull Run","Stonewall Jackson"],
+  ["Napoleon was exiled to this small Mediterranean island after his first abdication in 1814","Elba"],
+  ["This 1916 uprising in Dublin against British rule is commemorated each year on Easter","Easter Rising"],
+  ["This nurse's work during the Crimean War earned her the title 'The Lady with the Lamp'","Florence Nightingale"],
+  ["King Charles II of England restored the monarchy after this period of Puritan rule","Interregnum"],
+  ["This 1648 agreement between the Dutch Republic and Spain ended the Eighty Years' War","Treaty of Munster"],
+  ["This 1863 battle, the Civil War's turning point, was fought in and around a small Pennsylvania town","Gettysburg"],
+  ["This 1803 Supreme Court case established the principle of judicial review","Marbury v. Madison"],
+  ["This Shoshone woman served as an interpreter for the Lewis and Clark expedition","Sacagawea"],
+  ["The California Gold Rush began after James Marshall found gold at this site in 1848","Sutter's Mill"],
+  ["Paul Revere's 1775 ride warned that British troops were marching toward Lexington and this town","Concord"],
+  ["Fought in Maryland in September 1862, this battle remains the bloodiest single day in American history","Antietam"],
+  ["Robert E. Lee surrendered to Ulysses S. Grant at this Virginia village's courthouse in April 1865","Appomattox"],
+  ["Rosa Parks' 1955 arrest sparked this year-long civil rights protest in Alabama","Montgomery Bus Boycott"],
+  ["This 1962 standoff between the U.S. and the Soviet Union was set off by nuclear weapons placed 90 miles from Florida","Cuban Missile Crisis"],
+  ["This 1948-49 operation flew food and fuel into West Berlin during a Soviet blockade","Berlin Airlift"],
+  ["The D-Day landings of June 6, 1944 took place on the beaches of this French region","Normandy"],
+  ["English barons forced King John to accept this charter of liberties in 1215","Magna Carta"],
+  ["The Pilgrims crossed the Atlantic aboard this ship in 1620","Mayflower"],
+  ["Martin Luther's 1517 list of objections to the sale of indulgences sparked the Protestant Reformation","Ninety-five Theses"],
+  ["This last Tudor monarch saw England defeat the Spanish Armada in 1588","Elizabeth I"],
+  ["The 1989 'Velvet Revolution' peacefully ended communist rule in this country","Czechoslovakia"],
+  ["Released in 1990 after 27 years in prison, he became South Africa's first Black president in 1994","Nelson Mandela"],
+  ["Led by Lenin, this faction seized power in Russia in the October Revolution of 1917","Bolsheviks"],
+  ["This leader of Indian independence led the 240-mile Salt March to the sea in 1930","Mahatma Gandhi"],
+  ["The first emperor of a unified China, he was buried with an army of terracotta soldiers","Qin Shi Huang"],
+  ["This Macedonian king built an empire stretching to India before dying at 32 in 323 BC","Alexander the Great"],
+  ["Julius Caesar was assassinated on this date in 44 BC, the Ides of March","March 15"],
+  ["Ratified in 1920, the 19th Amendment guaranteed women this right","Right to vote"],
+  ["The Berlin Wall fell in November of this year","1989"],
+  ["This 1781 siege in Virginia, where Cornwallis surrendered, effectively ended the American Revolution","Yorktown"],
+ ],
+ "Science": [
+  ["This subatomic particle was discovered by J.J. Thomson in 1897","Electron"],
+  ["The Heisenberg Uncertainty Principle states you cannot simultaneously know position and this","Momentum"],
+  ["This element, atomic number 79, has been prized since ancient times","Gold"],
+  ["Watson and Crick discovered the structure of DNA with help from this female scientist's X-ray images","Rosalind Franklin"],
+  ["This law states that pressure and volume are inversely proportional for gases","Boyle's Law"],
+  ["The Doppler effect explains the change in this property of waves","Frequency"],
+  ["This organ produces insulin in the human body","Pancreas"],
+  ["The chemical formula for table salt","NaCl"],
+  ["This moon of Jupiter is believed to have a subsurface ocean","Europa"],
+  ["The half-life of Carbon-14 is approximately this many years","5730"],
+  ["This scientist proposed that the Earth orbits the Sun, not vice versa","Copernicus"],
+  ["Mitochondria are often called the 'powerhouse' of the cell because they produce this molecule","ATP"],
+  ["This gas makes up about 78% of Earth's atmosphere","Nitrogen"],
+  ["The process by which a solid becomes a gas without passing through liquid phase","Sublimation"],
+  ["This Scottish scientist discovered penicillin in 1928","Alexander Fleming"],
+  ["The SI unit of electrical resistance","Ohm"],
+  ["This physicist's cat is famous for being both alive and dead","Schrodinger"],
+  ["The study of fossils is called this","Paleontology"],
+  ["This element is used in nuclear reactors as fuel, atomic number 92","Uranium"],
+  ["The layer of the atmosphere where weather occurs","Troposphere"],
+  ["This type of rock is formed from cooled magma or lava","Igneous"],
+  ["The closest star to Earth besides the Sun","Proxima Centauri"],
+  ["This scale measures the hardness of minerals from 1 to 10","Mohs scale"],
+  ["The periodic table was created by this Russian chemist","Dmitri Mendeleev"],
+  ["This particle accelerator near Geneva is the world's largest","Large Hadron Collider"],
+  ["This vitamin deficiency causes scurvy","Vitamin C"],
+  ["The Kelvin scale sets absolute zero at this temperature in Celsius","-273"],
+  ["This naturalist sailed on the HMS Beagle and developed the theory of evolution","Charles Darwin"],
+  ["The collective term for organisms that can produce their own food through photosynthesis","Autotrophs"],
+  ["This planet's Great Red Spot is a storm larger than Earth","Jupiter"],
+  ["The number of bones in the adult human body","206"],
+  ["This Polish-French scientist won Nobel Prizes in both Physics and Chemistry","Marie Curie"],
+  ["The chemical element with the symbol Fe","Iron"],
+  ["This organelle contains the genetic material in eukaryotic cells","Nucleus"],
+  ["The phenomenon where light bends as it passes from one medium to another","Refraction"],
+  ["This effect describes the bending of light around massive objects","Gravitational lensing"],
+  ["CRISPR-Cas9 is a revolutionary tool for editing this molecule","DNA"],
+  ["This physicist formulated the uncertainty principle in quantum mechanics","Werner Heisenberg"],
+  ["The event horizon is the boundary of this cosmic phenomenon","Black hole"],
+  ["This process in stars fuses hydrogen into helium","Nuclear fusion"],
+  ["This gland, located at the base of the brain, is called the 'master gland'","Pituitary gland"],
+  ["The Krebs cycle takes place in this organelle","Mitochondria"],
+  ["This element, discovered by the Curies, was named after their native country","Polonium"],
+  ["The chemical symbol for gold on the periodic table","Au"],
+  ["Saturn's largest moon, which has a thick nitrogen atmosphere and liquid methane lakes","Titan"],
+  ["This hormone, produced by the adrenal glands, triggers the 'fight or flight' response","Adrenaline"],
+  ["The SI unit of force, named after the scientist who formulated the laws of motion","Newton"],
+  ["The most abundant element in the universe by mass","Hydrogen"],
+  ["This organ filters blood, produces bile, and is the largest internal organ in the human body","Liver"],
+  ["At extremely low temperatures, some materials lose all electrical resistance in this phenomenon","Superconductivity"],
+  ["This scientist was first to use a telescope to observe the four largest moons of Jupiter","Galileo Galilei"],
+  ["The atomic number of carbon, reflecting the number of protons in its nucleus","6"],
+  ["This fluorescent protein, originally found in jellyfish, is widely used as a biological marker","Green Fluorescent Protein"],
+  ["Earth's tectonic plates are part of this rigid outermost layer of the planet","Lithosphere"],
+  ["This law describes the force between two electric charges as inversely proportional to the square of their distance","Coulomb's Law"],
+  ["The chemical formula for glucose, the body's primary energy sugar","C6H12O6"],
+  ["This British physicist discovered the neutron in 1932","James Chadwick"],
+  ["A virus that infects and replicates inside a bacterium","Bacteriophage"],
+  ["This branch of chemistry is defined by the study of carbon-containing compounds","Organic chemistry"],
+  ["The layer of Earth between the crust and the outer core","Mantle"],
+  ["This type of electromagnetic radiation has the shortest wavelength and highest energy","Gamma rays"],
+  ["The second lightest element on the periodic table, atomic number 2","Helium"],
+  ["This invisible radiation, discovered by Wilhelm Röntgen in 1895, can pass through soft tissue","X-rays"],
+  ["The chemical symbol for sodium","Na"],
+  ["Thanks to a runaway greenhouse effect, this is the hottest planet in our solar system","Venus"],
+  ["In Einstein's equation E = mc², the 'c' stands for this","Speed of light"],
+  ["By surface area, this is the largest organ of the human body","Skin"],
+  ["On the pH scale, pure water has this neutral value","7"],
+  ["The branch of biology devoted to the study of fungi","Mycology"],
+  ["The chemical element with the symbol K","Potassium"],
+  ["The SI unit of electric current, named for a French physicist","Ampere"],
+  ["This type of cell division produces two genetically identical daughter cells","Mitosis"],
+  ["This German astronomer formulated three laws describing planetary motion in elliptical orbits","Johannes Kepler"],
+  ["The number of chromosomes in a typical human body cell","46"],
+  ["The hardest naturally occurring mineral, rated 10 on the Mohs scale","Diamond"],
+  ["The International Astronomical Union reclassified Pluto as a dwarf planet in this year","2006"],
+  ["This instrument measures atmospheric pressure","Barometer"],
+  ["Human skin produces this vitamin when exposed to sunlight","Vitamin D"],
+  ["This noble gas glows reddish-orange in illuminated advertising signs","Neon"],
+  ["Located in the middle ear, this stirrup-shaped bone is the smallest in the human body","Stapes"],
+  ["This Augustinian friar's experiments with pea plants laid the foundation for genetics","Gregor Mendel"],
+  ["The energy an object possesses due to its motion","Kinetic energy"],
+  ["This theory holds that the universe expanded from an extremely hot, dense state about 13.8 billion years ago","Big Bang"],
+  ["This iron-containing protein in red blood cells carries oxygen","Hemoglobin"],
+  ["The only metal that is liquid at standard room temperature","Mercury"],
+  ["About 300 million years ago, Earth's continents were joined in this supercontinent","Pangaea"],
+  ["In 1929 Edwin Hubble showed that the universe is doing this","Expanding"],
+  ["The SI unit of power is named for this Scottish inventor who improved the steam engine","James Watt"],
+ ],
+ "Literature": [
+  ["This novel begins 'It was the best of times, it was the worst of times'","A Tale of Two Cities"],
+  ["The protagonist of '1984' by George Orwell","Winston Smith"],
+  ["This novel begins 'Call me Ishmael'","Moby Dick"],
+  ["Gregor Samsa transforms into a giant insect in this Kafka novella","The Metamorphosis"],
+  ["This Nobel Prize-winning author wrote 'One Hundred Years of Solitude'","Gabriel Garcia Marquez"],
+  ["Jay Gatsby's real name in 'The Great Gatsby'","James Gatz"],
+  ["This epic poem begins 'Sing, O goddess, the anger of Achilles'","The Iliad"],
+  ["This Dostoevsky novel features the character Raskolnikov","Crime and Punishment"],
+  ["The fictional country where Gulliver first lands among tiny people","Lilliput"],
+  ["This Beat Generation author wrote 'On the Road'","Jack Kerouac"],
+  ["The pen name of Mary Ann Evans, who wrote 'Middlemarch'","George Eliot"],
+  ["The Bennet family's estate in 'Pride and Prejudice'","Longbourn"],
+  ["This Tennessee Williams play features Blanche DuBois","A Streetcar Named Desire"],
+  ["The narrator of 'The Canterbury Tales' is traveling to this saint's shrine","Thomas Becket"],
+  ["This Japanese author wrote 'Norwegian Wood' and 'Kafka on the Shore'","Haruki Murakami"],
+  ["Humbert Humbert is the narrator of this controversial Nabokov novel","Lolita"],
+  ["The Brontë sisters were named Charlotte, Emily, and this","Anne"],
+  ["This author wrote 'The Great Gatsby'","F. Scott Fitzgerald"],
+  ["The three witches appear in this Shakespeare play","Macbeth"],
+  ["This Russian author wrote 'War and Peace'","Leo Tolstoy"],
+  ["Atticus Finch is a character in this novel","To Kill a Mockingbird"],
+  ["This poet wrote 'The Raven'","Edgar Allan Poe"],
+  ["The land of Narnia was created by this author","C.S. Lewis"],
+  ["This American author wrote 'The Old Man and the Sea'","Ernest Hemingway"],
+  ["The protagonist of 'The Catcher in the Rye'","Holden Caulfield"],
+  ["This author wrote 'A Tale of Two Cities'","Charles Dickens"],
+  ["Middle-earth was created by this author","J.R.R. Tolkien"],
+  ["This Greek philosopher wrote 'The Republic'","Plato"],
+  ["Scout and Jem's father in 'To Kill a Mockingbird'","Atticus Finch"],
+  ["This author wrote 'The Scarlet Letter'","Nathaniel Hawthorne"],
+  ["The four March sisters appear in this Louisa May Alcott novel","Little Women"],
+  ["This playwright wrote 'Death of a Salesman'","Arthur Miller"],
+  ["This author's unfinished novel 'The Last Tycoon' was published posthumously","F. Scott Fitzgerald"],
+  ["In Greek mythology, this blind prophet appears in 'Oedipus Rex'","Tiresias"],
+  ["This Pulitzer Prize-winning novel follows Sethe, an escaped slave","Beloved"],
+  ["Cormac McCarthy's 'Blood Meridian' takes place along this border region","US-Mexico border"],
+  ["This author created the character Hercule Poirot","Agatha Christie"],
+  ["The line 'April is the cruellest month' opens this T.S. Eliot poem","The Waste Land"],
+  ["This Salman Rushdie novel prompted a fatwa from Iran's Ayatollah","The Satanic Verses"],
+  ["Leopold Bloom is the protagonist of this James Joyce novel","Ulysses"],
+  ["Marcel Proust wrote this massive seven-volume French novel exploring memory and time","In Search of Lost Time"],
+  ["Samuel Beckett wrote this play in which two men wait endlessly for a figure who never arrives","Waiting for Godot"],
+  ["This American author wrote 'The Sound and the Fury' using multiple narrators and stream of consciousness","William Faulkner"],
+  ["This Italian poet wrote the 'Divine Comedy,' including its famous first section 'Inferno'","Dante Alighieri"],
+  ["This reclusive Massachusetts poet wrote 'Because I could not stop for Death'","Emily Dickinson"],
+  ["In this Aldous Huxley dystopia, humans are manufactured in hatcheries and conditioned into castes","Brave New World"],
+  ["This Chilean author's debut novel 'The House of the Spirits' brought her international fame","Isabel Allende"],
+  ["This Virginia Woolf novel follows Clarissa Dalloway over the course of a single June day in London","Mrs. Dalloway"],
+  ["Iago engineers the downfall of the title character in this Shakespeare tragedy","Othello"],
+  ["'Heart of Darkness' by Joseph Conrad directly inspired this 1979 Francis Ford Coppola Vietnam War film","Apocalypse Now"],
+  ["This John Steinbeck novel follows the Joad family's migration from Oklahoma during the Dust Bowl","The Grapes of Wrath"],
+  ["Chinua Achebe's 'Things Fall Apart' centers on the Igbo culture of this modern African nation","Nigeria"],
+  ["This French author wrote both 'Les Misérables' and 'The Hunchback of Notre-Dame'","Victor Hugo"],
+  ["This first-person narrator of 'The Great Gatsby' lives next door to Jay Gatsby","Nick Carraway"],
+  ["This author's anti-war novel 'Slaughterhouse-Five' is set partly during the firebombing of Dresden","Kurt Vonnegut"],
+  ["This Joseph Heller novel set in WWII gave the English language a phrase meaning a no-win situation","Catch-22"],
+  ["This Romantic poet wrote 'The Rime of the Ancient Mariner' and 'Kubla Khan'","Samuel Taylor Coleridge"],
+  ["This Russian author's final novel, 'The Brothers Karamazov,' explores faith, doubt, and parricide","Fyodor Dostoevsky"],
+  ["Pip is the orphan protagonist of this Charles Dickens novel about ambition and social class","Great Expectations"],
+  ["Josef K. is arrested for an unspecified crime in this Franz Kafka novel","The Trial"],
+  ["In Poe's 'The Tell-Tale Heart,' the narrator murders an old man because of this unsettling physical feature","His eye"],
+  ["Lady Madeline is prematurely buried in this Poe short story set in a crumbling ancestral mansion","The Fall of the House of Usher"],
+  ["In Poe's 'The Raven,' the narrator is mourning this 'lost Lenore' — the deceased woman he grieves for","Lenore"],
+  ["This Poe tale set during a devastating plague features Prince Prospero hosting a masquerade in seven colored rooms","The Masque of the Red Death"],
+  ["Poe is credited with inventing the detective fiction genre through stories featuring this Parisian amateur sleuth","C. Auguste Dupin"],
+  ["In this Poe story, the narrator walls up his victim in the catacombs beneath a palazzo during carnival","The Cask of Amontillado"],
+  ["This Poe tale features a murderer undone when a walled-up feline reveals the hidden corpse to the police","The Black Cat"],
+  ["Poe's only completed novel follows Arthur Gordon Pym, a stowaway who encounters bizarre adventures at sea","The Narrative of Arthur Gordon Pym"],
+  ["This Shakespeare play opens with the line 'If music be the food of love, play on'","Twelfth Night"],
+  ["Prospero, the exiled Duke of Milan, uses magic to shipwreck his enemies in this Shakespeare play","The Tempest"],
+  ["In this Shakespeare history play, the title character cries 'A horse! A horse! My kingdom for a horse!'","Richard III"],
+  ["Puck, Oberon, and Titania cause romantic chaos in an enchanted forest in this Shakespeare comedy","A Midsummer Night's Dream"],
+  ["Shylock demands a pound of flesh as payment of a debt in this Shakespeare play","The Merchant of Venice"],
+  ["'To be, or not to be, that is the question' is the famous soliloquy opening from this Shakespeare tragedy","Hamlet"],
+  ["The Montague and Capulet families feud in this Shakespeare tragedy about star-crossed lovers","Romeo and Juliet"],
+  ["Petruchio attempts to tame the headstrong Katherina in this Shakespeare comedy","The Taming of the Shrew"],
+  ["This 8th-century Old English epic poem tells of a Geatish hero who battles the monster Grendel","Beowulf"],
+  ["John Milton's epic poem about Satan's rebellion and the expulsion from Eden","Paradise Lost"],
+  ["This Jane Austen novel follows Anne Elliot, who reunites with a naval captain she once rejected","Persuasion"],
+  ["This Thomas Hardy novel follows a young woman through tragedy in the fictional region of Wessex","Tess of the d'Urbervilles"],
+  ["This Romantic poet wrote 'Ozymandias' and drowned in a sailing accident in Italy at age 29","Percy Bysshe Shelley"],
+  ["Mary Shelley's 1818 Gothic novel, subtitled 'The Modern Prometheus,' introduced a scientist who creates life","Frankenstein"],
+  ["Heathcliff's obsessive love drives this Emily Brontë novel set on the Yorkshire moors","Wuthering Heights"],
+  ["This Romantic poet wrote 'Ode to a Nightingale' and 'Ode on a Grecian Urn' before dying at 25","John Keats"],
+  ["William Blake's 'Songs of Innocence' is paired with this darker companion collection","Songs of Experience"],
+  ["Oscar Wilde's only novel tells of a man whose portrait ages while he remains eternally young","The Picture of Dorian Gray"],
+  ["This Geoffrey Chaucer work features pilgrims telling stories on their journey to a cathedral city","The Canterbury Tales"],
+  ["Jonathan Swift's satire follows a ship's surgeon on voyages to fantastical lands including Lilliput and Brobdingnag","Gulliver's Travels"],
+  ["Robert Louis Stevenson's novella explores the dual nature of man through a respectable doctor and his sinister alter ego","Strange Case of Dr Jekyll and Mr Hyde"],
+  ["This W.B. Yeats poem contains the ominous line 'Things fall apart; the centre cannot hold'","The Second Coming"],
+  ["This Daniel Defoe novel, published in 1719, tells of a castaway who survives 28 years on a remote island","Robinson Crusoe"],
+  ["A governess discovers her employer's dark secret at Thornfield Hall in this Charlotte Brontë novel","Jane Eyre"],
+  ["This Alexander Pope mock-epic poem satirizes a trivial society scandal involving stolen hair","The Rape of the Lock"],
+  ["D.H. Lawrence's controversial 1928 novel about a noblewoman's affair with a gamekeeper was banned for decades","Lady Chatterley's Lover"],
+  ["This Wordsworth poem begins 'I wandered lonely as a cloud' and celebrates a field of golden flowers","Daffodils"],
+  ["Edmund Spenser wrote this allegorical epic poem dedicated to Queen Elizabeth I","The Faerie Queene"],
+  ["George Orwell wrote this allegorical novella in which farm animals overthrow their human owner","Animal Farm"],
+  ["Samuel Johnson spent nine years compiling this landmark 1755 reference work of the English language","A Dictionary of the English Language"],
+  ["Huck and the escaped slave Jim travel down the Mississippi on a raft in this Mark Twain novel","Adventures of Huckleberry Finn"],
+  ["This captain of the Pequod is obsessed with hunting the white whale","Captain Ahab"],
+  ["In 'The Scarlet Letter,' Hester Prynne is forced to wear this letter","A"],
+  ["Cervantes wrote of this deluded knight who tilts at windmills","Don Quixote"],
+  ["'Big Brother is watching you' is a slogan from this George Orwell novel","Nineteen Eighty-Four"],
+  ["Elizabeth Bennet spars with Mr. Darcy in this 1813 novel","Pride and Prejudice"],
+  ["In this Ray Bradbury novel, firemen burn books","Fahrenheit 451"],
+  ["This American poet wrote 'Leaves of Grass' and 'O Captain! My Captain!'","Walt Whitman"],
+  ["This British author wrote 'Lord of the Flies' about boys stranded on an island","William Golding"],
+  ["In Homer's 'Odyssey,' this faithful wife waits 20 years for her husband while fending off suitors","Penelope"],
+  ["Captain Nemo commands this submarine in 'Twenty Thousand Leagues Under the Seas'","Nautilus"],
+  ["'Two roads diverged in a yellow wood' begins this Robert Frost poem","The Road Not Taken"],
+  ["Sherlock Holmes lives at this London address","221B Baker Street"],
+  ["This John Steinbeck novella follows migrant workers George and Lennie","Of Mice and Men"],
+  ["This English novelist wrote 'Emma' and 'Sense and Sensibility'","Jane Austen"],
+  ["Hamlet's ill-fated love, she drowns after her father Polonius is killed","Ophelia"],
+ ],
+ "Geography": [
+  ["The capital of Australia","Canberra"],
+  ["The Blue Nile and White Nile merge in this African capital city","Khartoum"],
+  ["This country has the largest population in the world","India"],
+  ["K2, the world's second-tallest mountain, is located in this range","Karakoram"],
+  ["The capital of Myanmar, formerly known as Burma","Naypyidaw"],
+  ["The Mariana Trench, the deepest point in the ocean, is located in this ocean","Pacific Ocean"],
+  ["This landlocked South American country has two capitals: La Paz and Sucre","Bolivia"],
+  ["This African country was formerly known as Abyssinia","Ethiopia"],
+  ["The capital of Canada","Ottawa"],
+  ["The Sahara Desert spans this many African countries","11"],
+  ["The Great Barrier Reef is located off the coast of this country","Australia"],
+  ["This European country is shaped like a boot","Italy"],
+  ["The Amazon River flows through this continent","South America"],
+  ["The capital of Brazil","Brasilia"],
+  ["This country has the most time zones","France"],
+  ["The smallest country in the world","Vatican City"],
+  ["This strait separates Europe from Africa","Strait of Gibraltar"],
+  ["The capital of South Korea","Seoul"],
+  ["This mountain range separates Europe from Asia","Ural Mountains"],
+  ["The largest country by land area","Russia"],
+  ["This river flows through London","Thames"],
+  ["The capital of Egypt","Cairo"],
+  ["This U.S. state is known as the 'Sunshine State'","Florida"],
+  ["The Dead Sea borders Israel and this country","Jordan"],
+  ["This is the only continent without a desert","Europe"],
+  ["This tiny European country is entirely surrounded by Italy","San Marino"],
+  ["The Khyber Pass connects Pakistan with this country","Afghanistan"],
+  ["This African nation's name means 'Land of Honest Men' in the Mossi language","Burkina Faso"],
+  ["The Mekong River flows through six countries and empties into this sea","South China Sea"],
+  ["This is the only country to border both the Atlantic and Indian Oceans","South Africa"],
+  ["The ancient city of Petra is located in this modern country","Jordan"],
+  ["This Central Asian country is doubly landlocked, bordered only by other landlocked countries","Uzbekistan"],
+  ["The Galápagos Islands belong to this South American country","Ecuador"],
+  ["The capital city of New Zealand","Wellington"],
+  ["The Bosphorus strait divides this city between the European and Asian continents","Istanbul"],
+  ["Lake Titicaca, the world's highest navigable lake, sits on the border between Peru and this country","Bolivia"],
+  ["Mount Kilimanjaro, Africa's highest peak, is located in this East African country","Tanzania"],
+  ["The Suez Canal connects the Mediterranean Sea to this body of water","Red Sea"],
+  ["The capital city of Pakistan","Islamabad"],
+  ["This large island off the southeast coast of Africa is home to unique species including lemurs","Madagascar"],
+  ["This small landlocked East African nation is known as 'the Land of a Thousand Hills'","Rwanda"],
+  ["The Tigris and Euphrates rivers both flow through this modern Middle Eastern country","Iraq"],
+  ["Angel Falls, the world's highest uninterrupted waterfall, is located in this South American country","Venezuela"],
+  ["This narrow country stretches approximately 4,300 km along South America's Pacific coast","Chile"],
+  ["This African nation contains more ancient pyramids than Egypt, built by the Nubian kingdom of Kush","Sudan"],
+  ["Brunei, Malaysia, and this country share the island of Borneo","Indonesia"],
+  ["The capital city of Argentina","Buenos Aires"],
+  ["This body of water separates the island of Great Britain from continental Europe","English Channel"],
+  ["The Ganges River is considered sacred in this religion","Hinduism"],
+  ["This tiny, doubly landlocked Alpine principality sits between Switzerland and Austria","Liechtenstein"],
+  ["Mount Olympus, mythological home of the Greek gods, is located in this modern country","Greece"],
+  ["The Atacama Desert, the driest non-polar desert on Earth, runs through this continent","South America"],
+  ["The capital of Turkey","Ankara"],
+  ["The capital of Kenya","Nairobi"],
+  ["The capital of Peru","Lima"],
+  ["The capital of Vietnam","Hanoi"],
+  ["The capital of Morocco","Rabat"],
+  ["The capital of Switzerland, officially called its 'federal city'","Bern"],
+  ["The capital of Norway","Oslo"],
+  ["In 1991 this planned city replaced Lagos as the capital of Nigeria","Abuja"],
+  ["Europe's longest river, it empties into the Caspian Sea","Volga"],
+  ["Counting cold deserts, the largest desert on Earth covers this continent","Antarctica"],
+  ["Africa's largest lake, shared by Uganda, Kenya, and Tanzania","Lake Victoria"],
+  ["The largest of the Great Lakes by surface area","Lake Superior"],
+  ["The Danube River empties into this sea","Black Sea"],
+  ["North America's highest peak, located in Alaska","Denali"],
+  ["Valletta is the capital of this Mediterranean island nation","Malta"],
+  ["This strait between Russia and Alaska separates Asia from North America","Bering Strait"],
+  ["The northernmost capital city of a sovereign nation","Reykjavik"],
+  ["This U.S. state has the longest coastline","Alaska"],
+  ["Mount Everest is part of this mountain range","Himalayas"],
+  ["This Southeast Asian country was known as Siam until 1939","Thailand"],
+  ["This country was known internationally as Persia until 1935","Iran"],
+  ["This island nation was known as Ceylon until 1972","Sri Lanka"],
+  ["The largest country in South America by area","Brazil"],
+  ["The fabled trading city of Timbuktu is in this West African country","Mali"],
+  ["The Panama Canal connects the Atlantic Ocean with this ocean","Pacific Ocean"],
+  ["Victoria Falls lies on this river on the border of Zambia and Zimbabwe","Zambezi"],
+  ["This Italian city is built on more than 100 small islands linked by around 400 bridges","Venice"],
+  ["The only U.S. state made up entirely of islands","Hawaii"],
+  ["Mount Fuji stands on this island, the largest in Japan","Honshu"],
+  ["This river flows through Baghdad","Tigris"],
+  ["This country is home to Machu Picchu","Peru"],
+ ],
+ "Pop Culture": [
+  ["This actor played Iron Man in the Marvel Cinematic Universe","Robert Downey Jr."],
+  ["The singer known as the 'King of Pop'","Michael Jackson"],
+  ["This TV show featured characters named Ross, Rachel, Monica, Chandler, Joey, and Phoebe","Friends"],
+  ["This director created 'Jurassic Park' and 'E.T.'","Steven Spielberg"],
+  ["The Beatles were from this English city","Liverpool"],
+  ["This actress won an Oscar for 'La La Land'","Emma Stone"],
+  ["The fictional country where 'Black Panther' takes place","Wakanda"],
+  ["This singer is known as 'Queen Bey'","Beyonce"],
+  ["The highest-grossing film of all time (adjusted for inflation)","Gone with the Wind"],
+  ["This band performed 'Bohemian Rhapsody'","Queen"],
+  ["The actor who played Forrest Gump","Tom Hanks"],
+  ["The singer of 'Purple Rain'","Prince"],
+  ["This streaming service created 'Stranger Things'","Netflix"],
+  ["The main character in 'The Matrix' trilogy","Neo"],
+  ["This pop star's real name is Stefani Germanotta","Lady Gaga"],
+  ["The actor who played Jack in 'Titanic'","Leonardo DiCaprio"],
+  ["This TV show is set in the fictional Dunder Mifflin Paper Company","The Office"],
+  ["The band that performed 'Smells Like Teen Spirit'","Nirvana"],
+  ["This actress plays Katniss Everdeen in 'The Hunger Games'","Jennifer Lawrence"],
+  ["The host of 'The Tonight Show' since 2014","Jimmy Fallon"],
+  ["The singer known as 'The Boss'","Bruce Springsteen"],
+  ["This HBO series featured dragons and the Iron Throne","Game of Thrones"],
+  ["The rapper whose real name is Marshall Mathers","Eminem"],
+  ["This Pixar film was the first feature-length computer-animated movie","Toy Story"],
+  ["The Coen Brothers directed this 1996 film set in snowy Minnesota","Fargo"],
+  ["This singer's real name is Robyn Fenty","Rihanna"],
+  ["The fictional Delos Corporation created the theme park in this HBO series","Westworld"],
+  ["This David Bowie persona was killed off in a 1973 concert at the Hammersmith Odeon","Ziggy Stardust"],
+  ["AFI named this 1941 Orson Welles film the greatest American movie of all time","Citizen Kane"],
+  ["This band's 'Dark Side of the Moon' spent 937 weeks on the Billboard 200","Pink Floyd"],
+  ["Director Denis Villeneuve adapted this Frank Herbert sci-fi novel in 2021","Dune"],
+  ["This director's films include 'Pulp Fiction,' 'Inglourious Basterds,' and 'Kill Bill'","Quentin Tarantino"],
+  ["Walter White adopts this alias when operating as a drug manufacturer in 'Breaking Bad'","Heisenberg"],
+  ["This British actor plays Sherlock Holmes in the BBC series 'Sherlock'","Benedict Cumberbatch"],
+  ["The Coen Brothers' 'No Country for Old Men' features this actor as the chilling villain Anton Chigurh","Javier Bardem"],
+  ["'The Shining' was directed by this filmmaker, adapting Stephen King's novel","Stanley Kubrick"],
+  ["This 'SNL' comedian's impersonation of Sarah Palin became iconic during the 2008 presidential campaign","Tina Fey"],
+  ["Kendrick Lamar's 'DAMN.' was the first hip-hop album to win this prestigious American arts prize","Pulitzer Prize"],
+  ["The character Hannibal Lecter first appeared in this Thomas Harris novel before 'The Silence of the Lambs'","Red Dragon"],
+  ["This cable network was home to 'The Sopranos,' 'The Wire,' and 'Game of Thrones'","HBO"],
+  ["In 'Game of Thrones,' 'Khaleesi' is the title held by this character, mother of dragons","Daenerys Targaryen"],
+  ["This animated Fox sitcom features the Griffin family of Quahog, Rhode Island","Family Guy"],
+  ["This 2008 Danny Boyle film set in Mumbai won eight Academy Awards including Best Picture","Slumdog Millionaire"],
+  ["The lead singer and frontman of Led Zeppelin","Robert Plant"],
+  ["This actor played Tony Montana in Brian De Palma's 1983 film 'Scarface'","Al Pacino"],
+  ["'Oppenheimer,' the 2023 film about the atomic bomb's creator, was directed by this filmmaker","Christopher Nolan"],
+  ["This rapper's birth name is Aubrey Drake Graham","Drake"],
+  ["Bruce Willis played this wisecracking NYPD cop in the 'Die Hard' franchise","John McClane"],
+  ["This HBO drama set in Baltimore followed drug dealers and law enforcement through five distinct storylines","The Wire"],
+  ["This 1994 Robert Zemeckis film featured Tom Hanks delivering chocolates-based life wisdom","Forrest Gump"],
+  ["'Here's looking at you, kid' is a famous line from this 1942 Humphrey Bogart film","Casablanca"],
+  ["Dorothy Gale follows the yellow brick road in this 1939 film","The Wizard of Oz"],
+  ["This Canadian-born host emceed 'Jeopardy!' from 1984 until 2020","Alex Trebek"],
+  ["The drummer of the Beatles","Ringo Starr"],
+  ["Elvis Presley's mansion in Memphis, Tennessee","Graceland"],
+  ["This 1977 film introduced Luke Skywalker, Han Solo, and Darth Vader","Star Wars"],
+  ["The headmaster of Hogwarts for most of the Harry Potter series","Albus Dumbledore"],
+  ["This sitcom was set in a Boston bar 'where everybody knows your name'","Cheers"],
+  ["This actor and rapper starred as a version of himself in 'The Fresh Prince of Bel-Air'","Will Smith"],
+  ["Released in 1937, this was Disney's first feature-length animated film","Snow White and the Seven Dwarfs"],
+  ["This singer-songwriter of 'Like a Rolling Stone' won the 2016 Nobel Prize in Literature","Bob Dylan"],
+  ["Co-created by Larry David, this 1990s sitcom was famously 'a show about nothing'","Seinfeld"],
+  ["This actor won an Oscar as Don Vito Corleone in 1972's 'The Godfather'","Marlon Brando"],
+  ["The Simpsons live in this town, whose state is famously never revealed","Springfield"],
+  ["Mick Jagger and Keith Richards formed this British band in 1962","The Rolling Stones"],
+  ["James Bond's code number","007"],
+  ["This grumpy 'Sesame Street' Muppet lives in a trash can","Oscar the Grouch"],
+  ["Known as the 'Queen of Soul,' she had a signature hit with 'Respect'","Aretha Franklin"],
+  ["'The Sound of Music' tells the story of this singing Austrian family","Von Trapp"],
+  ["This spinoff of 'Breaking Bad' follows lawyer Jimmy McGill","Better Call Saul"],
+  ["This 1975 Steven Spielberg thriller about a great white shark is considered the first summer blockbuster","Jaws"],
+ ],
+ "Sports": [
+  ["This basketball player is known as 'His Airness'","Michael Jordan"],
+  ["FIFA's headquarters are located in this Swiss city","Zurich"],
+  ["This golfer has won the most major championships","Jack Nicklaus"],
+  ["The country that has won the most FIFA World Cups","Brazil"],
+  ["This tennis player has won the most Grand Slam singles titles","Novak Djokovic"],
+  ["The number of points a touchdown is worth in American football","6"],
+  ["This boxer was known as 'The Greatest'","Muhammad Ali"],
+  ["The baseball team that plays at Fenway Park","Boston Red Sox"],
+  ["This swimmer won 23 Olympic gold medals","Michael Phelps"],
+  ["In 2024 the Boston Celtics won their 18th NBA title, breaking a tie with this franchise for the most championships","Los Angeles Lakers"],
+  ["This city hosted the 2016 Summer Olympics","Rio de Janeiro"],
+  ["The NHL team with the most Stanley Cup championships","Montreal Canadiens"],
+  ["This American won 9 Olympic gold medals in track and field from 1984 to 1996, including four straight in the long jump","Carl Lewis"],
+  ["The length of a marathon in miles","26.2"],
+  ["This quarterback has won the most Super Bowls","Tom Brady"],
+  ["The only Grand Slam tennis tournament played on grass","Wimbledon"],
+  ["This baseball player hit 714 career home runs","Babe Ruth"],
+  ["The number of holes in a standard round of golf","18"],
+  ["This soccer player is known as 'CR7'","Cristiano Ronaldo"],
+  ["The country where sumo wrestling originated","Japan"],
+  ["This horse racing event is held in Louisville, Kentucky","Kentucky Derby"],
+  ["The NBA team LeBron James played for from 2010-2014","Miami Heat"],
+  ["This sprinter holds the world record in the 100 meters","Usain Bolt"],
+  ["The number of periods in a regulation NHL hockey game","3"],
+  ["This female tennis player has won 23 Grand Slam singles titles","Serena Williams"],
+  ["This horse racing event forms the third leg of the Triple Crown","Belmont Stakes"],
+  ["The Miracle on Ice occurred at the 1980 Winter Olympics in this U.S. city","Lake Placid"],
+  ["This nation's All Blacks rugby team performs the haka before matches","New Zealand"],
+  ["The Green Jacket is awarded to the winner of this golf major","The Masters"],
+  ["This Spanish cyclist won the Tour de France five consecutive times from 1991-1995","Miguel Indurain"],
+  ["The Marquess of Queensberry rules govern this sport","Boxing"],
+  ["This MLB player holds the record for most career hits","Pete Rose"],
+  ["The Ryder Cup pits golfers from the USA against players from this region","Europe"],
+  ["This pitching statistic measures the average number of earned runs allowed per nine innings","ERA"],
+  ["The length in meters of an Olympic competition swimming pool","50"],
+  ["Michael Schumacher and this British driver share the record of seven Formula 1 World Championships","Lewis Hamilton"],
+  ["The Heisman Trophy is awarded annually to the most outstanding player in this sport","College football"],
+  ["The Indianapolis 500 is held each May at this famous oval race track","Indianapolis Motor Speedway"],
+  ["Completing a golf hole two strokes under par earns this bird-themed designation","Eagle"],
+  ["The Davis Cup is the premier international team competition in this sport","Tennis"],
+  ["Muhammad Ali's 1975 'Thrilla in Manila' bout was fought against this heavyweight champion","Joe Frazier"],
+  ["The Vince Lombardi Trophy is awarded to the winner of this NFL championship game","Super Bowl"],
+  ["A score of three goals by one player in a single hockey game","Hat trick"],
+  ["Completing a golf hole one stroke under par earns this bird-themed designation","Birdie"],
+  ["Wilt Chamberlain scored this many points in a single NBA game on March 2, 1962","100"],
+  ["Cricket's 'The Ashes' is a historic test series played between England and this country","Australia"],
+  ["This Australian tennis player, nicknamed 'The Rocket,' completed two calendar Grand Slams in 1962 and 1969","Rod Laver"],
+  ["The FIFA World Cup trophy was named after this FIFA president who helped establish the tournament","Jules Rimet"],
+  ["The number of players on the field for each team in a standard soccer match","11"],
+  ["In American football, a safety scores this many points","2"],
+  ["This golfer's 2000 season, winning three of four majors, is considered the greatest single year in golf history","Tiger Woods"],
+  ["On May 6, 1954, this British medical student became the first person to run a mile in under four minutes","Roger Bannister"],
+  ["The number of players a baseball team has on the field on defense","9"],
+  ["Jackie Robinson broke Major League Baseball's color barrier in 1947 with this team","Brooklyn Dodgers"],
+  ["The first modern Olympic Games were held in 1896 in this city","Athens"],
+  ["This Canadian-American physical education teacher invented basketball in 1891","James Naismith"],
+  ["A perfect score in ten-pin bowling","300"],
+  ["The Tour de France is the most famous race in this sport","Cycling"],
+  ["The number of interlocking rings on the Olympic flag","5"],
+  ["This Romanian gymnast scored the first perfect 10 in Olympic history in 1976","Nadia Comaneci"],
+  ["Hockey legend Wayne Gretzky's nickname","The Great One"],
+  ["The Preakness Stakes, the second leg of the Triple Crown, is run in this state","Maryland"],
+  ["The number of minutes in a regulation soccer match, not counting stoppage time","90"],
+  ["Jesse Owens won four gold medals at the 1936 Olympics in this city","Berlin"],
+  ["The highest rank in professional sumo wrestling","Yokozuna"],
+  ["In tennis, a score of 40-40 is called this","Deuce"],
+  ["This Yankees first baseman, 'The Iron Horse,' played 2,130 consecutive games","Lou Gehrig"],
+  ["In golf, a hole completed in one stroke is called this","Hole in one"],
+ ],
+ "Art & Architecture": [
+  ["This artist painted the Mona Lisa","Leonardo da Vinci"],
+  ["The Sistine Chapel ceiling was painted by this artist","Michelangelo"],
+  ["This Dutch artist painted 'Starry Night'","Vincent van Gogh"],
+  ["The Taj Mahal is located in this country","India"],
+  ["This Spanish artist co-founded Cubism","Pablo Picasso"],
+  ["The architectural style of Notre-Dame Cathedral in Paris","Gothic"],
+  ["This sculptor created 'The Thinker'","Auguste Rodin"],
+  ["The ancient wonder that was a temple dedicated to the Greek goddess Artemis","Temple of Artemis"],
+  ["This artist is famous for his soup can paintings","Andy Warhol"],
+  ["The Louvre Museum is located in this city","Paris"],
+  ["This Mexican artist was known for her self-portraits","Frida Kahlo"],
+  ["The Parthenon was built to honor this Greek goddess","Athena"],
+  ["This Renaissance artist sculpted the statue of David in Florence","Michelangelo"],
+  ["The art movement that featured melting clocks by Salvador Dali","Surrealism"],
+  ["This architect designed Fallingwater in Pennsylvania","Frank Lloyd Wright"],
+  ["The artist who cut off part of his own ear","Vincent van Gogh"],
+  ["The Colosseum is located in this city","Rome"],
+  ["This artist painted 'The Birth of Venus'","Sandro Botticelli"],
+  ["The famous opera house with sail-shaped roofs in Sydney","Sydney Opera House"],
+  ["This Dutch artist was known for optical illusion drawings","M.C. Escher"],
+  ["This Dutch artist is known for his paintings of sunflowers and his severed ear","Vincent van Gogh"],
+  ["The Uffizi Gallery is located in this Italian city","Florence"],
+  ["This architect designed the Guggenheim Museum in Bilbao, Spain","Frank Gehry"],
+  ["Pointillism was developed by Georges Seurat and this artist","Paul Signac"],
+  ["This massive bronze statue once stood at the entrance to the harbor of Rhodes","Colossus of Rhodes"],
+  ["Caravaggio was a master of this dramatic light-and-shadow technique","Chiaroscuro"],
+  ["This American artist is known for his drip paintings and Abstract Expressionism","Jackson Pollock"],
+  ["The Hagia Sophia was originally built as a church in this city","Constantinople"],
+  ["This French Impressionist is known for his serial paintings of water lilies at Giverny","Claude Monet"],
+  ["The engineer who designed and built the iron lattice tower for the 1889 Paris World's Fair","Gustave Eiffel"],
+  ["This German art school, founded in Weimar in 1919 by Walter Gropius, transformed modern design","Bauhaus"],
+  ["This Dutch Golden Age painter created 'Girl with a Pearl Earring' and 'The Milkmaid'","Johannes Vermeer"],
+  ["This ancient Greek marble statue, discovered in 1820, is famous for her missing arms","Venus de Milo"],
+  ["This Renaissance master painted 'The School of Athens' and 'The Sistine Madonna'","Raphael"],
+  ["The Impressionist movement was named, mockingly at first, after this 1872 Monet painting","Impression, Sunrise"],
+  ["This Norwegian Expressionist artist painted 'The Scream' in 1893","Edvard Munch"],
+  ["The Chrysler Building and the Empire State Building are prime examples of this 1920s-30s architectural style","Art Deco"],
+  ["This early 20th-century avant-garde movement embraced chance, absurdity, and anti-art as a reaction to WWI","Dadaism"],
+  ["This French sculptor designed the Statue of Liberty, which was a gift from France to the United States","Frederic Auguste Bartholdi"],
+  ["This massive art museum on the banks of the Neva River in St. Petersburg is one of the world's largest","Hermitage Museum"],
+  ["Michelangelo's 'Pietà,' depicting the Virgin Mary cradling the dead Christ, is housed in this Vatican church","St. Peter's Basilica"],
+  ["This American abstract expressionist is known for his large-scale 'color field' canvases in deep, luminous hues","Mark Rothko"],
+  ["The Elgin Marbles, now at the British Museum, were originally part of this ancient Greek structure","Parthenon"],
+  ["El Greco, known for his elongated, mystical figures, was born on this Greek island before settling in Spain","Crete"],
+  ["The Musée d'Orsay in Paris houses the world's largest collection of works from this artistic movement","Impressionism"],
+  ["This British artist is known for his controversial work 'The Physical Impossibility of Death in the Mind of Someone Living,' featuring a preserved shark","Damien Hirst"],
+  ["The Forbidden City in Beijing served for nearly 500 years as the imperial palace for this nation's emperors","China"],
+  ["This Venetian Renaissance painter is celebrated for his mastery of warm color and atmospheric light","Titian"],
+  ["Leonardo da Vinci painted this mural of Jesus and his apostles in a Milan convent","The Last Supper"],
+  ["Picasso's 1937 painting protesting the bombing of a Basque town","Guernica"],
+  ["Grant Wood's 1930 painting of a stern farmer holding a pitchfork beside a woman","American Gothic"],
+  ["James McNeill Whistler's 'Arrangement in Grey and Black No. 1' is popularly known by this name","Whistler's Mother"],
+  ["Hokusai's most famous woodblock print shows a towering wave with Mount Fuji in the distance","The Great Wave off Kanagawa"],
+  ["This Chinese-American architect designed the glass pyramid at the Louvre","I.M. Pei"],
+  ["Antoni Gaudí's still-unfinished basilica in Barcelona","Sagrada Familia"],
+  ["Edward Hopper's 1942 painting of customers in a late-night diner","Nighthawks"],
+  ["Salvador Dalí's 1931 painting of melting pocket watches","The Persistence of Memory"],
+  ["Rembrandt's 1642 group portrait of a militia company earned this nickname because of its darkened varnish","The Night Watch"],
+  ["This limestone monument at Giza has a lion's body and a human head","Great Sphinx"],
+  ["Hieronymus Bosch's triptych depicting paradise, earthly pleasures, and hell","The Garden of Earthly Delights"],
+  ["Andy Warhol and Roy Lichtenstein were leading figures in this art movement","Pop Art"],
+  ["This sculptor created Chicago's mirrored 'Cloud Gate,' nicknamed 'The Bean'","Anish Kapoor"],
+  ["The famous leaning bell tower is in this Italian city","Pisa"],
+  ["Frank Lloyd Wright designed this New York art museum with a spiraling ramp","Guggenheim Museum"],
+  ["Gustav Klimt's gold-leaf painting of an embracing couple","The Kiss"],
+  ["With its exposed pipes and escalators, this Paris arts center was designed by Renzo Piano and Richard Rogers","Centre Pompidou"],
+  ["This Mexican muralist was married to Frida Kahlo","Diego Rivera"],
+  ["The temple complex of Angkor Wat is in this country","Cambodia"],
+  ["Johannes Vermeer spent his career in this Dutch city, which he painted in a famous 'View'","Delft"],
+ ],
+ "Word Origins": [
+  ["This word for 'fear of spiders' comes from the Greek word for spider","Arachnophobia"],
+  ["The Latin phrase 'carpe diem' translates to this in English","Seize the day"],
+  ["This word meaning 'all-knowing' comes from Latin roots for 'all' and 'to know'","Omniscient"],
+  ["The word 'alphabet' comes from the first two letters of this language","Greek"],
+  ["This French phrase meaning 'already seen' describes a feeling of familiarity","Deja vu"],
+  ["The word 'marathon' comes from a battle in this ancient country","Greece"],
+  ["This Latin phrase meaning 'in place of a parent' applies to schools","In loco parentis"],
+  ["The word 'salary' originally referred to money given to Roman soldiers to buy this","Salt"],
+  ["This Italian word for 'fresh' describes a type of wall painting","Fresco"],
+  ["The word 'quarantine' comes from the Italian word for this number","40"],
+  ["This prefix meaning 'one' comes from Greek","Mono"],
+  ["The word 'gymnasium' comes from the Greek word meaning this","Naked"],
+  ["This word for a fear of enclosed spaces contains the Latin word for 'to close'","Claustrophobia"],
+  ["The word 'assassin' comes from this Arabic word for a hashish user","Hashshashin"],
+  ["This Greek prefix meaning 'self' appears in words like 'autobiography'","Auto"],
+  ["The word 'panic' comes from the name of this Greek god","Pan"],
+  ["This word meaning 'to officially forbid' comes from Latin for 'between' and 'to say'","Interdict"],
+  ["The word 'sarcasm' comes from the Greek word meaning to do this to flesh","Tear"],
+  ["This Latin phrase meaning 'by the fact itself' is used in legal contexts","Ipso facto"],
+  ["The days of the week in English are named after gods from this mythology","Norse"],
+  ["This word for a bumbling person comes from the name of a Shakespearean constable","Dogberry"],
+  ["The word 'malaria' comes from Italian words meaning this","Bad air"],
+  ["This word for excessive pride comes from the Greek for 'insolence toward the gods'","Hubris"],
+  ["The word 'lunatic' derives from the Latin word for this celestial body","Moon"],
+  ["This word for a fake medicine comes from the Latin for 'I shall please'","Placebo"],
+  ["The word 'vandal' comes from this Germanic tribe that sacked Rome in 455 AD","Vandals"],
+  ["This word for a maze comes from the mythical structure built by Daedalus","Labyrinth"],
+  ["The word 'tantalize' comes from this Greek mythological figure punished with eternal hunger","Tantalus"],
+  ["The word 'disaster' comes from Italian and Latin roots meaning an ill-fated alignment of these celestial objects","Stars"],
+  ["The word 'typhoon' likely derives from a Chinese phrase 'tai fung' meaning this","Great wind"],
+  ["The word 'muscle' comes from the Latin 'musculus,' meaning this small animal, due to the rippling movement under skin","Mouse"],
+  ["The word 'rival' derives from the Latin word for this geographical feature, as neighbors once competed over water rights","River"],
+  ["The word 'paradise' comes from ancient Persian meaning this type of enclosed space","Garden"],
+  ["The Latin word 'sinister' originally simply meant this before acquiring its dark connotations","Left"],
+  ["Czech playwright Karel Čapek introduced this word, from the Czech for 'forced labor' or 'drudgery,' in his 1920 play 'R.U.R.'","Robot"],
+  ["The word 'companion' derives from Latin roots for 'together' and this staple food, meaning a person who shares meals","Bread"],
+  ["The word 'candidate' comes from the Latin for this color, because Roman office-seekers wore togas of that hue","White"],
+  ["The word 'dunce' is derived from the name of this 13th-century Scottish philosopher whose followers were seen as hairsplitting pedants","John Duns Scotus"],
+  ["The word 'window' comes from Old Norse words 'vindauga,' literally meaning this","Wind eye"],
+  ["The word 'tragedy' comes from the Greek phrase 'tragodia,' literally meaning this barnyard animal's song","Goat song"],
+  ["The word 'calculate' derives from the Latin 'calculus,' meaning these small objects Romans used as counting aids","Pebbles"],
+  ["The word 'hazard' entered English from the Arabic 'az-zahr,' meaning this object used in games of chance","Dice"],
+  ["The English word 'thug' comes from the name of this secretive Indian criminal cult known for ritual strangulation","Thuggee"],
+  ["The word 'trivia' originally referred to the meeting point of three roads in ancient Rome; this Latin word for 'three roads' gave us the term","Trivium"],
+  ["The word 'berserk' comes from Old Norse for 'bear shirt,' referring to Norse warriors who wore animal skins and fought in a state of this","Frenzy"],
+  ["The word 'chapel' derives from the Latin 'cappa,' referring to this outer garment associated with St. Martin of Tours","Cloak"],
+  ["The word 'boycott' comes from the name of this 19th-century Irish land agent who was shunned by his community","Charles Boycott"],
+  ["The word 'serendipity' was coined by Horace Walpole, inspired by a fairy tale about the princes of this island nation","Serendip"],
+  ["'Sabotage' derives from 'sabot,' the French name for this type of footwear","Wooden shoe"],
+  ["This 18th-century English nobleman supposedly gave his name to a meal of meat between bread slices","Earl of Sandwich"],
+  ["'Mesmerize' comes from the name of this German physician who promoted 'animal magnetism'","Franz Mesmer"],
+  ["'Galvanize' honors this Italian scientist who studied electricity in frog legs","Luigi Galvani"],
+  ["The guillotine is named for this French physician who proposed a more humane method of execution","Joseph-Ignace Guillotin"],
+  ["'Cereal' comes from the name of this Roman goddess of agriculture","Ceres"],
+  ["'Volcano' comes from the name of this Roman god of fire","Vulcan"],
+  ["'Hypnosis' comes from Hypnos, the Greek god of this","Sleep"],
+  ["'Philosophy' comes from Greek words meaning 'love of' this","Wisdom"],
+  ["'Democracy' combines Greek 'demos,' meaning people, with 'kratos,' meaning this","Rule"],
+  ["'Kindergarten' is German for this","Children's garden"],
+  ["'Alcohol' comes from the Arabic 'al-kuhl,' a fine powder originally used as this cosmetic","Eyeliner"],
+  ["'Jumbo' entered English through P.T. Barnum's famous circus animal of this kind","Elephant"],
+  ["The 'bikini' was named after an atoll in this present-day Pacific nation where nuclear bombs were tested","Marshall Islands"],
+  ["'Hamburger' comes from the name of this German city","Hamburg"],
+  ["'Shampoo' comes from a Hindi word meaning to do this","Press"],
+  ["This English statesman coined the word 'utopia' as the title of his 1516 book","Thomas More"],
+  ["'Avocado' comes from the Nahuatl word 'ahuacatl,' which also referred to this body part","Testicle"],
+  ["'Denim' comes from 'serge de Nîmes,' a fabric from a city in this country","France"],
+  ["'Clue' comes from 'clew,' a ball of this, recalling how Theseus escaped the labyrinth","Thread"],
+  ["'Nostalgia' combines Greek 'nostos,' meaning this, with 'algos,' meaning pain","Homecoming"],
+ ],
+ "Food & Drink": [
+  ["This Italian dish consists of wide, flat pasta layered with sauce and cheese","Lasagna"],
+  ["Champagne comes from this country","France"],
+  ["This spice gives curry its yellow color","Turmeric"],
+  ["The main ingredient in hummus","Chickpeas"],
+  ["This Japanese dish consists of raw fish over rice","Sushi"],
+  ["Besides grain, vodka is commonly distilled from this starchy vegetable","Potato"],
+  ["This French cooking term means 'everything in place' for ingredients","Mise en place"],
+  ["The country of origin for paella","Spain"],
+  ["This berry is used to flavor gin","Juniper"],
+  ["Prosciutto is a type of this cured meat","Ham"],
+  ["This Mexican dish consists of a tortilla wrapped around a filling","Burrito"],
+  ["The country known for producing Scotch whisky","Scotland"],
+  ["This Italian dessert means 'pick me up' in English","Tiramisu"],
+  ["The main ingredient in guacamole","Avocado"],
+  ["This grain is used to make traditional Italian risotto","Rice"],
+  ["The French term for a chef's tall white hat","Toque"],
+  ["This country is famous for its kimchi","South Korea"],
+  ["The main spirit in a margarita","Tequila"],
+  ["This nut is the main ingredient in marzipan","Almond"],
+  ["The country of origin for the croissant","Austria"],
+  ["This French term describes cooking food in a vacuum-sealed bag in water","Sous vide"],
+  ["Mole, a sauce made with chocolate and chili peppers, originated in this country","Mexico"],
+  ["This Japanese spirit is distilled from rice, barley, or sweet potatoes","Shochu"],
+  ["Pho is a traditional soup from this Southeast Asian country","Vietnam"],
+  ["This blue cheese from Italy is named after a town near Milan","Gorgonzola"],
+  ["The Scoville scale measures the heat level of these","Chili peppers"],
+  ["This cocktail combines bourbon, sugar, bitters, and a twist of citrus peel","Old Fashioned"],
+  ["Dim sum originated in tea houses along this trade route","Silk Road"],
+  ["This spice, hand-harvested from the stigmas of a crocus flower, is the world's most expensive by weight","Saffron"],
+  ["The main spirit in a classic Mojito cocktail","Rum"],
+  ["This French cooking technique involves briefly boiling food then immediately submerging it in ice water","Blanching"],
+  ["Baklava, the honey-and-nut layered pastry, originated in this empire's palace kitchens in Constantinople","Ottoman Empire"],
+  ["This dish, considered Scotland's national dish, is made from sheep's organs mixed with oatmeal and spices","Haggis"],
+  ["This leavened Indian flatbread is traditionally baked at high heat in a clay tandoor oven","Naan"],
+  ["This hearty Provençal seafood stew originated in the port city of Marseille","Bouillabaisse"],
+  ["This thin sliced raw beef dish, typically served as an Italian appetizer, was named after a Venetian Renaissance painter","Carpaccio"],
+  ["Traditional Ethiopian injera flatbread is made from this ancient grain, a staple of the Horn of Africa","Teff"],
+  ["The Michelin Guide, which awards restaurant stars, was originally created by this French tire company to encourage road travel","Michelin"],
+  ["The word 'umami,' the fifth basic taste alongside sweet, sour, salty, and bitter, comes from this language","Japanese"],
+  ["This elongated French pastry made from choux dough is filled with cream and glazed with chocolate","Éclair"],
+  ["The traditional South American drink made from dried yerba mate leaves steeped in hot water","Mate"],
+  ["Miso paste is made by fermenting this legume with salt and a mold called koji","Soybeans"],
+  ["This Italian cheese, traditionally made from water buffalo milk, is a staple of Neapolitan pizza","Mozzarella"],
+  ["The town of Cognac, home of the famous brandy, lies in this French department named for the river that flows through it","Charente"],
+  ["This ancient Roman condiment made from fermented fish is considered an ancestor of Worcestershire sauce","Garum"],
+  ["Jerk seasoning, featuring allspice and scotch bonnet peppers, is a culinary tradition of this Caribbean nation","Jamaica"],
+  ["This powdered green tea is whisked into a froth in the Japanese tea ceremony","Matcha"],
+  ["This cold Spanish soup is made from raw blended vegetables, especially tomatoes","Gazpacho"],
+  ["The herb that is the main ingredient in Genoa's classic pesto","Basil"],
+  ["Chianti wine comes from this Italian region","Tuscany"],
+  ["This Hungarian stew of meat and vegetables is seasoned with paprika","Goulash"],
+  ["This Italian sparkling wine comes mainly from the Veneto and Friuli regions","Prosecco"],
+  ["Peking duck takes its name from the former romanization of this city","Beijing"],
+  ["This Greek casserole layers eggplant, spiced ground meat, and béchamel sauce","Moussaka"],
+  ["This clarified butter is a staple of Indian cooking","Ghee"],
+  ["'Pico de gallo,' the Mexican fresh salsa, literally translates to this","Rooster's beak"],
+  ["Known for its large holes, this Swiss cheese is named for a valley in the canton of Bern","Emmental"],
+  ["This Japanese alcoholic beverage is brewed from fermented rice","Sake"],
+  ["This Eastern European soup gets its deep red color from beets","Borscht"],
+  ["This Italian frozen dessert is churned more slowly and is denser than American ice cream","Gelato"],
+  ["Vodka, ginger beer, and lime served in a copper mug make this cocktail","Moscow Mule"],
+  ["This fuzzy fruit, once called the Chinese gooseberry, was renamed for New Zealand's national bird","Kiwifruit"],
+  ["These small Spanish plates are served as snacks with drinks","Tapas"],
+  ["A Reuben sandwich combines corned beef, Swiss cheese, Russian dressing, and this fermented cabbage","Sauerkraut"],
+  ["This espresso drink with steamed milk foam may be named for the color of Capuchin friars' habits","Cappuccino"],
+  ["In beer, the abbreviation IPA stands for this","India Pale Ale"],
+  ["The long, thin loaf that is the classic bread of France","Baguette"],
+ ],
+ "Potpourri": [
+  ["The number of cards in a standard deck without jokers","52"],
+  ["This gemstone is associated with the month of April","Diamond"],
+  ["The zodiac sign represented by a lion","Leo"],
+  ["This board game features properties like Boardwalk and Park Place","Monopoly"],
+  ["The number of years in a millennium","1000"],
+  ["This company created the iPhone","Apple"],
+  ["The currency used in Japan","Yen"],
+  ["This fairy tale character slept for 100 years","Sleeping Beauty"],
+  ["The number of dots on a standard pair of dice","42"],
+  ["The Celtic festival of Samhain is the origin of this modern holiday","Halloween"],
+  ["The Roman numeral for 50","L"],
+  ["This nursery rhyme character sat on a wall before having a great fall","Humpty Dumpty"],
+  ["Geologists consider this island nation the largest above-water part of Zealandia, a mostly submerged continent","New Zealand"],
+  ["This social media platform is known for its 280-character limit","Twitter"],
+  ["The traditional material for a 25th wedding anniversary gift","Silver"],
+  ["This chess piece can only move diagonally","Bishop"],
+  ["This Greek letter is used to represent the ratio of a circle's circumference to its diameter","Pi"],
+  ["The name of the ship in the 'Pirates of the Caribbean' films","The Black Pearl"],
+  ["This card game is also known as 21","Blackjack"],
+  ["In Morse code, this letter is represented by three dots","S"],
+  ["The Dewey Decimal System is used to organize collections in these institutions","Libraries"],
+  ["This precious gem variety of the mineral corundum comes in all colors except red","Sapphire"],
+  ["The NATO phonetic alphabet uses this word for the letter M","Mike"],
+  ["This playing card is known as the 'suicide king' due to his sword position","King of Hearts"],
+  ["Esperanto was created in the 19th century by L.L. Zamenhof as this type of language","Universal language"],
+  ["The Richter scale measures the magnitude of these natural events","Earthquakes"],
+  ["This unit of measurement equals approximately 3.26 light-years","Parsec"],
+  ["In chess, this is the only piece that can move any number of squares in any direction","Queen"],
+  ["A 'baker's dozen' refers to this specific number","13"],
+  ["The seventh deadly sin, alongside pride, greed, lust, envy, gluttony, and sloth","Wrath"],
+  ["The birthstone for the month of July","Ruby"],
+  ["In heraldry, the term 'gules' refers to this color","Red"],
+  ["This board game, also known as Cluedo outside North America, involves solving a murder mystery in a mansion","Clue"],
+  ["The Olympic motto 'Citius, Altius, Fortius' translates from Latin to this phrase in English","Faster, Higher, Stronger"],
+  ["The highest-ranking hand in standard poker","Royal flush"],
+  ["The Greek mathematician credited with the theorem relating the sides of a right triangle","Pythagoras"],
+  ["A 'fortnight' refers to this many days","14"],
+  ["In music, a composition written for exactly two performers","Duet"],
+  ["The Roman numeral for 1,000","M"],
+  ["Ireland's national symbol, often confused with the four-leaf variety considered lucky","Shamrock"],
+  ["In Scrabble, using all seven tiles in a single turn earns this bonus point total in addition to the word's score","50"],
+  ["This logical paradox, proposed by Bertrand Russell, involves a barber who shaves all those who do not shave themselves","Russell's Paradox"],
+  ["The NATO phonetic alphabet word for the letter 'A'","Alpha"],
+  ["The study of flags, their history, symbolism, and usage","Vexillology"],
+  ["This is the only U.S. state whose name can be typed using only one row of keys on a QWERTY keyboard","Alaska"],
+  ["The collective noun for a group of crows","Murder"],
+  ["Phobos and Deimos are the two moons of this planet","Mars"],
+  ["New York City is nicknamed 'The Big' this","Apple"],
+  ["The number of squares on a chessboard","64"],
+  ["The collective noun for a group of lions","Pride"],
+  ["The traditional gift for a 50th wedding anniversary","Gold"],
+  ["This Founding Father's portrait appears on the U.S. $100 bill","Benjamin Franklin"],
+  ["The fear of heights","Acrophobia"],
+  ["This U.S. city is nicknamed the 'Windy City'","Chicago"],
+  ["The traditional number of colors in a rainbow","7"],
+  ["In English-language Scrabble, Q and this letter are each worth 10 points","Z"],
+  ["Fortune cookies, though inspired by a Japanese cracker, were popularized in this country","United States"],
+  ["The tablet held by the Statue of Liberty is inscribed with this date in Roman numerals","July 4, 1776"],
+  ["The collective noun for a group of owls","Parliament"],
+  ["The study of handwriting, especially to analyze personality","Graphology"],
+  ["In Roman numerals, D represents this number","500"],
+  ["This island nation is nicknamed the 'Emerald Isle'","Ireland"],
+  ["The number of zeros in one billion","9"],
+ ],
+ "Classical Music": [
+  ["Haydn is known as the 'Father' of both the symphony and this chamber music form","String quartet"],
+  ["This German composer wrote the 'Moonlight Sonata' and nine symphonies despite losing his hearing","Ludwig van Beethoven"],
+  ["Mozart's final composition, left incomplete at his death in 1791, was this type of funeral mass","Requiem"],
+  ["This Russian composer wrote the ballets 'Swan Lake,' 'The Nutcracker,' and 'Sleeping Beauty'","Pyotr Ilyich Tchaikovsky"],
+  ["This beloved set of four Vivaldi violin concertos, published in 1725, is among the most performed works in classical music","The Four Seasons"],
+  ["This Austrian child prodigy composed over 600 works — including operas, symphonies, and concertos — before dying at 35","Wolfgang Amadeus Mozart"],
+  ["This Baroque master composed the 'Brandenburg Concertos' and 'The Well-Tempered Clavier'","Johann Sebastian Bach"],
+  ["Handel's oratorio 'Messiah' includes this thunderous chorus that audiences traditionally stand for","Hallelujah Chorus"],
+  ["This Finnish composer's patriotic tone poem 'Finlandia' became an unofficial national anthem","Jean Sibelius"],
+  ["This Italian opera composer wrote 'La Bohème,' 'Tosca,' and 'Madama Butterfly'","Giacomo Puccini"],
+  ["Beethoven's Symphony No. 9 features a choral finale setting this Schiller poem to music","Ode to Joy"],
+  ["This Polish-born composer and pianist was celebrated for his nocturnes, etudes, and polonaises","Frédéric Chopin"],
+  ["This Georges Bizet opera, set in Seville and featuring a fiery cigarette factory worker, premiered in 1875","Carmen"],
+  ["Verdi wrote this opera about an Ethiopian princess enslaved in Egypt","Aida"],
+  ["Richard Wagner's cycle of four epic operas, including 'Die Walküre'","The Ring of the Nibelung"],
+  ["The 1913 Paris premiere of this Russian's ballet 'The Rite of Spring' caused a near-riot","Igor Stravinsky"],
+  ["This French composer wrote 'Boléro,' built on a single repeating melody and an unrelenting snare drum rhythm","Maurice Ravel"],
+  ["This French Impressionist composer wrote 'Clair de lune'","Claude Debussy"],
+  ["Gioachino Rossini's comic opera featuring the barber Figaro","The Barber of Seville"],
+  ["The number of keys on a standard modern piano","88"],
+  ["George Gershwin's 1924 work for piano and jazz band opens with a famous clarinet glissando","Rhapsody in Blue"],
+  ["Antonín Dvořák's Symphony No. 9 is popularly known by this nickname","From the New World"],
+  ["Gustav Holst's orchestral suite with movements including 'Mars, the Bringer of War'","The Planets"],
+  ["Mozart's opera about the legendary seducer Don Juan","Don Giovanni"],
+  ["This Russian composer's 'Peter and the Wolf' assigns each character an instrument","Sergei Prokofiev"],
+  ["This Italian musical term indicates a gradual increase in loudness","Crescendo"],
+  ["Camille Saint-Saëns' humorous suite that includes 'The Swan'","The Carnival of the Animals"],
+  ["Johann Pachelbel's best-known piece, a staple at weddings, is this in D major","Canon"],
+  ["Modest Mussorgsky's piano suite inspired by a memorial exhibition of Viktor Hartmann's artwork","Pictures at an Exhibition"],
+  ["Edvard Grieg wrote 'In the Hall of the Mountain King' as incidental music for this Ibsen play","Peer Gynt"],
+  ["Known as the 'Waltz King,' he composed 'The Blue Danube'","Johann Strauss II"],
+  ["Aaron Copland's ballet score that features variations on the Shaker hymn 'Simple Gifts'","Appalachian Spring"],
+  ["Carl Orff's cantata that opens and closes with the thunderous 'O Fortuna'","Carmina Burana"],
+  ["Beethoven's Symphony No. 3 was originally dedicated to this leader, until he crowned himself emperor","Napoleon"],
+ ],
+ "U.S. Presidents": [
+  ["This president, the only one to resign from office, stepped down in August 1974 amid the Watergate scandal","Richard Nixon"],
+  ["The only president elected to four terms, he died in office in April 1945","Franklin D. Roosevelt"],
+  ["This president delivered the Gettysburg Address in November 1863","Abraham Lincoln"],
+  ["At 42, he became the youngest person to serve as president after William McKinley's assassination in 1901","Theodore Roosevelt"],
+  ["This former general warned of the 'military-industrial complex' in his 1961 farewell address","Dwight D. Eisenhower"],
+  ["This president completed the Louisiana Purchase from France in 1803","Thomas Jefferson"],
+  ["The only president to receive every electoral vote, he did it twice","George Washington"],
+  ["The first president to live in the White House, he moved in in November 1800","John Adams"],
+  ["This 9th president died just 31 days after giving a nearly two-hour inaugural address in 1841","William Henry Harrison"],
+  ["Called the 'Father of the Constitution,' he became the 4th president in 1809","James Madison"],
+  ["This former peanut farmer from Plains, Georgia, won the Nobel Peace Prize in 2002","Jimmy Carter"],
+  ["A sign reading 'The buck stops here' sat on the desk of this president, who authorized the atomic bombings of Japan","Harry S. Truman"],
+  ["Before entering politics, this 40th president was a Hollywood actor and president of the Screen Actors Guild","Ronald Reagan"],
+  ["The only person to serve as both president and Chief Justice of the United States","William Howard Taft"],
+  ["The son of the 2nd president, he became the 6th president in 1825","John Quincy Adams"],
+  ["Nicknamed 'Old Hickory,' this president signed the Indian Removal Act of 1830","Andrew Jackson"],
+  ["This 1823 policy warning European powers against new colonization in the Americas bears the name of the 5th president","Monroe Doctrine"],
+  ["Impeached by the House in 1868, this president was acquitted by the Senate by a single vote","Andrew Johnson"],
+  ["This president's 'Great Society' programs created Medicare and Medicaid in 1965","Lyndon B. Johnson"],
+  ["'Ask not what your country can do for you' comes from this president's 1961 inaugural address","John F. Kennedy"],
+  ["This Union general who accepted Lee's surrender became the 18th president in 1869","Ulysses S. Grant"],
+  ["The only president born in Hawaii, he served from 2009 to 2017","Barack Obama"],
+  ["This president served eight years as Ronald Reagan's vice president before winning the 1988 election","George H.W. Bush"],
+  ["Shot by Charles Guiteau in 1881, this president's death spurred civil service reform","James Garfield"],
+  ["This president was assassinated at the Pan-American Exposition in Buffalo in 1901","William McKinley"],
+  ["Before becoming the 31st president, this mining engineer led famine relief efforts in Europe after WWI","Herbert Hoover"],
+  ["The Teapot Dome scandal tarnished the administration of this president, who died in office in 1923","Warren G. Harding"],
+  ["The only person to serve as president without being elected president or vice president, he took office in 1974","Gerald Ford"],
+  ["President James K. Polk led the nation through this 1846-48 war that added California to the U.S.","Mexican-American War"],
+  ["The only lifelong bachelor to serve as president, he held office just before Lincoln","James Buchanan"],
+ ],
+ "Mythology": [
+  ["King of the Greek gods, he ruled from Mount Olympus and hurled thunderbolts","Zeus"],
+  ["The Roman god of war, for whom the fourth planet is named","Mars"],
+  ["This Norse god of thunder wields the hammer Mjolnir","Thor"],
+  ["Greek goddess of wisdom who sprang fully grown and armored from Zeus's head","Athena"],
+  ["This Greek warrior's mother dipped him in the River Styx, leaving only his heel vulnerable","Achilles"],
+  ["The first woman in Greek myth, she opened a jar that released evils into the world, leaving only hope inside","Pandora"],
+  ["This Titan stole fire from the gods and gave it to humanity, and was chained to a rock as punishment","Prometheus"],
+  ["In the underworld, Sisyphus is condemned to forever push this up a hill","Boulder"],
+  ["Odysseus blinded this one-eyed son of Poseidon to escape his cave","Polyphemus"],
+  ["In Norse myth, warriors slain in battle are brought by the Valkyries to this hall of Odin","Valhalla"],
+  ["This Egyptian god of embalming and the dead is usually depicted with the head of a jackal","Anubis"],
+  ["This Greek hero beheaded Medusa with help from a mirrored shield","Perseus"],
+  ["Theseus killed this half-man, half-bull creature in the labyrinth on Crete","Minotaur"],
+  ["Jason and the Argonauts sailed in search of this treasure","Golden Fleece"],
+  ["The Roman name for Aphrodite, goddess of love","Venus"],
+  ["This three-headed dog guards the gates of Hades","Cerberus"],
+  ["Charon ferries the souls of the dead across this river of the Greek underworld","Styx"],
+  ["Heracles performed his Twelve Labors in service to this king of Tiryns and Mycenae","Eurystheus"],
+  ["This Norse trickster god fathered the wolf Fenrir and the serpent Jormungandr","Loki"],
+  ["This Egyptian sun god was often depicted with the head of a falcon topped by a sun disk","Ra"],
+  ["The beautiful youth Narcissus fell in love with this","His own reflection"],
+  ["Wearing wings of feathers and wax built by his father Daedalus, he flew too close to the sun","Icarus"],
+  ["Greek goddess of the hunt and twin sister of Apollo","Artemis"],
+  ["Queen of the Greek gods, she was the jealous wife of Zeus","Hera"],
+  ["In Norse mythology, this immense ash tree connects the nine worlds","Yggdrasil"],
+  ["Orpheus descended to the underworld to bring back this wife, but lost her when he looked back","Eurydice"],
+  ["Greek god of the sea who carried a trident","Poseidon"],
+  ["The Trojan War began after Paris carried off this wife of Menelaus","Helen of Troy"],
+  ["Odin sacrificed one of these at Mimir's well in exchange for wisdom","Eye"],
+  ["This Egyptian goddess, wife of Osiris and mother of Horus, gathered the pieces of her murdered husband","Isis"],
+ ],
+};
+
+/* Family game topics: one shared board. Kids get questions from the kid categories listed in `kids`
+   ("*" = any kid category), grown-ups get questions from the `grown` sections of GROWN. */
+const FAMILY = [
+  { id: "fam_history", name: "History",          emoji: "🏛️", intro: "Let's travel back in time!",                    kids: ["history"], grown: ["History", "U.S. Presidents"] },
+  { id: "fam_science", name: "Science & Nature", emoji: "🔬", intro: "Animals, space, dinosaurs, and how things work!", kids: ["animals", "space", "body", "earth", "plants", "ocean", "dinos", "dinoexperts"], grown: ["Science"] },
+  { id: "fam_books",   name: "Books",            emoji: "📚", intro: "Let's remember some great books and stories!",  kids: ["stories", "dragonmasters", "galaxyzack", "treehouse", "binderofdoom"], grown: ["Literature"] },
+  { id: "fam_geo",     name: "Geography",        emoji: "🌎", intro: "Grab your map! Let's travel the world.",       kids: ["maps"], grown: ["Geography"] },
+  { id: "fam_sports",  name: "Sports",           emoji: "🏆", intro: "Lace up! It's game time.",                      kids: ["soccer", "hoops", "baltimore"], grown: ["Sports"] },
+  { id: "fam_movies",  name: "Movies & TV",      emoji: "🎬", intro: "Grab the popcorn! It's movie night.",           kids: ["disney", "jurassic", "starwars", "movienight", "cartoons"], grown: ["Pop Culture"] },
+  { id: "fam_words",   name: "Words",            emoji: "🔤", intro: "Let's play with letters and words!",            kids: ["words"], grown: ["Word Origins"] },
+  { id: "fam_food",    name: "Food",             emoji: "🍕", intro: "Time to eat! Let's learn about yummy food.",     kids: ["food"], grown: ["Food & Drink"] },
+  { id: "fam_myths",   name: "Myths & Legends",  emoji: "🦄", intro: "Gods, heroes, and magical creatures!",          kids: ["myths"], grown: ["Mythology"] },
+  { id: "fam_arts",    name: "Art & Music",      emoji: "🎨", intro: "Grab a paintbrush and tune up!",                kids: ["arts"], grown: ["Art & Architecture", "Classical Music"] },
+  { id: "fam_grab",    name: "Grab Bag",         emoji: "🎁", intro: "A little bit of everything!",                   kids: ["*"], grown: ["Potpourri"] },
+];
+const ROLES = [{ id: "kid", name: "Kid", icon: "🧒" }, { id: "grown", name: "Grown-up", icon: "🧑" }];
+
 const LEVELS = [
   { id: "little", name: "1st–2nd grade", sub: "Little learners", range: [1, 2] },
   { id: "middle", name: "2nd–4th grade", sub: "Getting Kids", range: [2, 4] },
@@ -687,15 +1664,17 @@ const TOPICS = [
 ];
 const VALUES = [100, 200, 300, 400, 500];
 const COLORS = ["c0", "c1", "c2", "c3", "c4"];
-const CHEERS = ["Great job!", "You got it!", "Super smart!", "Awesome!", "Way to go!", "Kids!"];
+const CHEERS = ["Great job!", "You got it!", "Super smart!", "Awesome!", "Way to go!", "Brilliant!"];
 const COMFORT = ["Nice try!", "Good guess!", "So close!", "Keep going!"];
+const GROWN_CHEERS = ["Correct!", "That's right!", "Well played!", "Nailed it!"];
+const GROWN_COMFORT = ["Not this time!", "Tough one!", "So close!"];
 const DEFAULT_NAMES = ["Player 1", "Player 2", "Player 3", "Player 4"];
 
 /* ===== Saved settings (this device only) ===== */
 function load(key, fallback) { try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : fallback; } catch (e) { return fallback; } }
 function save(key, val) { try { localStorage.setItem(key, JSON.stringify(val)); } catch (e) {} }
 
-let prefs = Object.assign({ count: 1, names: DEFAULT_NAMES.slice(), level: "all", read: true, bot: false, botLevel: "medium", topics: "mix" }, load("bb-prefs", {}));
+let prefs = Object.assign({ count: 1, names: DEFAULT_NAMES.slice(), level: "all", read: true, bot: false, botLevel: "medium", topics: "mix", family: false, roles: ["kid", "grown", "grown", "kid"] }, load("bb-prefs", {}));
 
 /* ===== Computer player ===== */
 const BOT_NAME = "Robo";
@@ -708,7 +1687,8 @@ const botLevel = () => BOT_LEVELS.find((l) => l.id === prefs.botLevel) || BOT_LE
 // Harder squares (higher rows) are harder for Robo too
 const botGetsIt = (row) => Math.random() < botLevel().acc - row * 0.05;
 const isBot = (p) => !!(p && p.bot);
-const nameTag = (p) => (isBot(p) ? "🤖 " : "") + esc(p.name);
+const isGrown = (p) => !!(p && p.role === "grown");
+const nameTag = (p) => (isBot(p) ? "🤖 " : S && S.family ? (isGrown(p) ? "🧑 " : "🧒 ") : "") + esc(p.name);
 
 let botTimer = null, botToken = 0;
 function botWait(ms, fn) { clearTimeout(botTimer); const t = ++botToken; botTimer = setTimeout(() => { if (t === botToken) fn(); }, ms); }
@@ -716,6 +1696,7 @@ function botCancel() { clearTimeout(botTimer); botToken++; }
 // Give the kid time to hear the question before Robo answers
 const readTime = (text) => (prefs.read && canSpeak ? Math.max(3200, plain(text).length * 80) : 2600);
 let seen = new Set(load("bb-seen", []));
+let grownSeen = new Set(load("bb-gseen", []));
 
 /* ===== Game state ===== */
 let S = null; // { screen, players, cols, star, turn, lesson, lessonIdx, final }
@@ -726,36 +1707,60 @@ const plain = (s) => s.replace(/<[^>]+>/g, "");
 const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
 function shuffle(a) { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
 
-function q(catId, idx) {
+/* Kid question by key ("catId-index") and grown-up question by key ("Section-index"). */
+function qk(key) {
+  const cut = key.lastIndexOf("-"), catId = key.slice(0, cut), idx = +key.slice(cut + 1);
   const cat = BANK.find((c) => c.id === catId);
   const [g, e, text, a, w, f] = cat.qs[idx];
-  return { cat, g, e, text, a, w, f, key: catId + "-" + idx };
+  return { cat, g, e, text, a, w, f, key };
 }
+function gk(key) {
+  const cut = key.lastIndexOf("-"), sec = key.slice(0, cut);
+  const [text, a] = GROWN[sec][+key.slice(cut + 1)];
+  return { sec, text, a, key };
+}
+/* A board column's topic: a kid category in the normal game, a shared topic in the Family game. */
+const catById = (id) => BANK.find((c) => c.id === id) || FAMILY.find((c) => c.id === id);
 
-/* Pick the 5 questions for a category, easiest (100) to hardest (500). */
-function pickClues(cat, range) {
+const kidCands = (ids) => (ids.includes("*") ? BANK : BANK.filter((c) => ids.includes(c.id)))
+  .flatMap((cat) => cat.qs.map((item, i) => ({ k: cat.id + "-" + i, g: item[0] })));
+
+/* Pick n kid questions, easiest to hardest, spread across the grade range. Skips keys in `used`. */
+function pickClues(cands, range, used, n = 5) {
   const [lo, hi] = range;
-  const used = new Set();
+  const taken = new Set();
   const out = [];
-  for (let i = 0; i < 5; i++) {
-    const target = lo + (hi - lo) * (i / 4);
-    let best = -1, bestScore = Infinity;
-    cat.qs.forEach((item, idx) => {
-      if (used.has(idx)) return;
-      const score = Math.abs(item[0] - target) + (seen.has(cat.id + "-" + idx) ? 0.75 : 0) + Math.random() * 0.2;
-      if (score < bestScore) { bestScore = score; best = idx; }
+  for (let i = 0; i < n; i++) {
+    const target = n === 1 ? hi : lo + (hi - lo) * (i / (n - 1));
+    let best = null, bestScore = Infinity;
+    cands.forEach((c) => {
+      if (taken.has(c.k) || used.has(c.k)) return;
+      const score = Math.abs(c.g - target) + (seen.has(c.k) ? 0.75 : 0) + Math.random() * 0.2;
+      if (score < bestScore) { bestScore = score; best = c; }
     });
-    used.add(best);
+    if (!best) break;
+    taken.add(best.k);
     out.push(best);
   }
-  return out.sort((a, b) => cat.qs[a][0] - cat.qs[b][0]);
+  out.sort((a, b) => a.g - b.g);
+  out.forEach((c) => used.add(c.k));
+  return out.map((c) => c.k);
+}
+/* Pick n grown-up questions for a Family topic. Ones not seen before come first. */
+function pickGrown(fam, used, n = 5) {
+  const keys = fam.grown.flatMap((sec) => (GROWN[sec] || []).map((_, i) => sec + "-" + i)).filter((k) => !used.has(k));
+  const fresh = shuffle(keys.filter((k) => !grownSeen.has(k))), old = shuffle(keys.filter((k) => grownSeen.has(k)));
+  const out = fresh.concat(old).slice(0, n);
+  out.forEach((k) => used.add(k));
+  return out;
 }
 
 const gameLevel = () => LEVELS.find((l) => l.id === prefs.level) || LEVELS[3];
 const fitsTopics = (c) => prefs.topics === "mix" || (prefs.topics === "fun") === (c.group === "fun");
 
-/* Five categories that haven't been used yet this game. Mix = at least 2 of each kind. */
-function chooseCats(usedIds) {
+/* Five topics that haven't been used yet this game. Mix = at least 2 of each kind. */
+function chooseCats(usedIds, family) {
+  if (family) return shuffle(FAMILY.filter((c) => !usedIds.includes(c.id))).slice(0, 5);
   const avail = BANK.filter((c) => !usedIds.includes(c.id) && fitsTopics(c));
   if (prefs.topics !== "mix") return shuffle(avail).slice(0, 5);
   const school = shuffle(avail.filter((c) => c.group !== "fun"));
@@ -763,11 +1768,20 @@ function chooseCats(usedIds) {
   const rest = shuffle(school.slice(2).concat(fun.slice(2)));
   return shuffle(school.slice(0, 2).concat(fun.slice(0, 2), rest[0]));
 }
-function buildCols(cats, mult) {
-  return cats.map((cat) => ({
-    cat: cat.id,
-    clues: pickClues(cat, gameLevel().range).map((idx, r) => ({ idx, value: VALUES[r] * mult, done: false, ok: null })),
-  }));
+/* Every square holds a kid question (k). In the Family game it also holds a grown-up one (p). */
+function buildCols(cats, mult, family, used) {
+  return cats.map((cat) => {
+    const kids = pickClues(kidCands(family ? cat.kids : [cat.id]), gameLevel().range, used);
+    const grown = family ? pickGrown(cat, used) : [];
+    return { cat: cat.id, clues: kids.map((k, r) => ({ k, p: grown[r] || null, value: VALUES[r] * mult, done: false, ok: null })) };
+  });
+}
+/* Keys already on a board or in the final, so nothing repeats within a game. */
+function usedKeys() {
+  const u = new Set();
+  S.past.concat(S.cols).forEach((col) => col.clues.forEach((cl) => { u.add(cl.k); if (cl.p) u.add(cl.p); }));
+  u.add(S.final.k); if (S.final.p) u.add(S.final.p);
+  return u;
 }
 /* Daily Double squares go in different columns, never in the top (easiest) row. */
 function placeStars(n) {
@@ -776,29 +1790,35 @@ function placeStars(n) {
 
 function newGame() {
   const level = gameLevel();
-  const boardCats = chooseCats([]);
-  // Final question: hardest available in a category not on the board
-  const finalCat = pick(BANK.filter((c) => !boardCats.includes(c) && fitsTopics(c)));
-  const fIdx = pickClues(finalCat, [level.range[1], level.range[1]])[0];
+  const family = !!prefs.family && prefs.count >= 2;
+  const used = new Set();
+  const boardCats = chooseCats([], family);
+  // Final question: a topic not on the board, hardest kid question for the chosen grades
+  const finalCat = pick(family ? FAMILY.filter((c) => !boardCats.includes(c)) : BANK.filter((c) => !boardCats.includes(c) && fitsTopics(c)));
+  const cols = buildCols(boardCats, 1, family, used);
+  const fk = pickClues(kidCands(family ? finalCat.kids : [finalCat.id]), [level.range[1], level.range[1]], used, 1)[0];
+  const fp = family ? pickGrown(finalCat, used, 1)[0] : null;
   S = {
     screen: "lesson",
+    family,
     round: 1,
-    players: prefs.names.slice(0, prefs.count).map((n, i) => ({ name: (n || "").trim() || DEFAULT_NAMES[i], score: 0 }))
-      .concat(prefs.bot ? [{ name: BOT_NAME, score: 0, bot: true }] : []),
-    cols: buildCols(boardCats, 1),
+    players: prefs.names.slice(0, prefs.count).map((n, i) => ({ name: (n || "").trim() || DEFAULT_NAMES[i], score: 0, role: family ? prefs.roles[i] || "kid" : "kid" }))
+      .concat(prefs.bot && !family ? [{ name: BOT_NAME, score: 0, bot: true }] : []),
+    cols,
     past: [],
     stars: placeStars(1),
     turn: 0,
     lessonIdx: 0,
-    final: { cat: finalCat.id, idx: fIdx, step: 0, player: 0, wagers: [], answers: [] },
+    final: { cat: finalCat.id, k: fk, p: fp, step: 0, player: 0, wagers: [], answers: [] },
   };
 }
 
 /* Double Jeopardy: new topics, double values, two Daily Double squares. Lowest score picks first. */
 function startDoubleRound() {
-  const used = S.cols.map((c) => c.cat).concat(S.final.cat);
+  const usedCats = S.past.concat(S.cols).map((c) => c.cat).concat(S.final.cat);
+  const used = usedKeys();
   S.past = S.past.concat(S.cols);
-  S.cols = buildCols(chooseCats(used), 2);
+  S.cols = buildCols(chooseCats(usedCats, S.family), 2, S.family, used);
   S.stars = placeStars(2);
   S.round = 2;
   const low = Math.min(...S.players.map((p) => p.score));
@@ -874,10 +1894,21 @@ function show(screen) {
 
 /* ----- Home ----- */
 function renderHome() {
-  $("player-count").innerHTML = [1, 2, 3, 4].map((n) =>
+  const fam = prefs.family;
+  if (fam && prefs.count < 2) prefs.count = 2;
+  $("player-count").innerHTML = (fam ? [2, 3, 4] : [1, 2, 3, 4]).map((n) =>
     `<button type="button" class="chip round" data-n="${n}" aria-pressed="${prefs.count === n}">${n}</button>`).join("");
+  $("family-toggle").setAttribute("aria-pressed", String(fam));
   $("names").innerHTML = Array.from({ length: prefs.count }, (_, i) =>
-    `<input id="name-${i}" type="text" maxlength="14" autocomplete="off" aria-label="Player ${i + 1} name" placeholder="${DEFAULT_NAMES[i]}" value="${esc(prefs.names[i] === DEFAULT_NAMES[i] ? "" : prefs.names[i] || "")}">`).join("");
+    `<div class="pl"><input id="name-${i}" type="text" maxlength="14" autocomplete="off" aria-label="Player ${i + 1} name" placeholder="${DEFAULT_NAMES[i]}" value="${esc(prefs.names[i] === DEFAULT_NAMES[i] ? "" : prefs.names[i] || "")}">
+      ${fam ? `<div class="roles" role="group" aria-label="Player ${i + 1} plays as">${ROLES.map((r) =>
+        `<button type="button" class="chip mini" data-p="${i}" data-role="${r.id}" aria-pressed="${(prefs.roles[i] || "kid") === r.id}">${r.icon} ${r.name}</button>`).join("")}</div>` : ""}</div>`).join("");
+  $("bot-toggle").hidden = fam;
+  $("level-hint").textContent = fam ? "This sets the kid questions. Grown-ups get real Jeopardy-style clues." : "Easy questions are worth 100. The hardest are worth 500.";
+  $("topics-hint").textContent = fam ? "Everyone shares these topics. Each game picks 5 of them." : "Favorites are books, sports, movies, and TV.";
+  $("topics").hidden = fam;
+  $("fam-topics").hidden = !fam;
+  $("fam-topics").innerHTML = FAMILY.map((t) => `<span class="chip mini static">${t.emoji} ${esc(t.name)}</span>`).join("");
   $("levels").innerHTML = LEVELS.map((l) =>
     `<button type="button" class="chip" data-level="${l.id}" aria-pressed="${prefs.level === l.id}">${l.name}<small>${l.sub}</small></button>`).join("");
   $("read-toggle").setAttribute("aria-pressed", String(prefs.read && canSpeak));
@@ -885,13 +1916,18 @@ function renderHome() {
   $("topics").innerHTML = TOPICS.map((t) =>
     `<button type="button" class="chip" data-topic="${t.id}" aria-pressed="${prefs.topics === t.id}">${t.name}<small>${t.sub}</small></button>`).join("");
   $("bot-toggle").setAttribute("aria-pressed", String(prefs.bot));
-  $("bot-levels").hidden = !prefs.bot;
+  $("bot-levels").hidden = !prefs.bot || fam;
   $("bot-levels").innerHTML = BOT_LEVELS.map((l) =>
     `<button type="button" class="chip" data-bot="${l.id}" aria-pressed="${prefs.botLevel === l.id}">${l.name}<small>${l.sub}</small></button>`).join("");
 }
 $("topics").addEventListener("click", (e) => {
   const b = e.target.closest("[data-topic]"); if (!b) return;
   readNames(); prefs.topics = b.dataset.topic; save("bb-prefs", prefs); renderHome(); sndTap();
+});
+$("family-toggle").addEventListener("click", () => { readNames(); prefs.family = !prefs.family; save("bb-prefs", prefs); renderHome(); sndTap(); });
+$("names").addEventListener("click", (e) => {
+  const b = e.target.closest("[data-role]"); if (!b) return;
+  readNames(); prefs.roles[+b.dataset.p] = b.dataset.role; save("bb-prefs", prefs); renderHome(); sndTap();
 });
 $("bot-toggle").addEventListener("click", () => { readNames(); prefs.bot = !prefs.bot; save("bb-prefs", prefs); renderHome(); sndTap(); });
 $("bot-levels").addEventListener("click", (e) => {
@@ -921,11 +1957,11 @@ $("go-play").addEventListener("click", () => { readNames(); newGame(); startBoar
 function lessonCards() {
   const cards = [];
   S.cols.forEach((col, ci) => {
-    const cat = BANK.find((c) => c.id === col.cat);
+    const cat = catById(col.cat);
     cards.push({ type: "intro", ci, cat });
-    col.clues.forEach((cl) => cards.push({ type: "fact", ci, cat, item: q(col.cat, cl.idx) }));
+    col.clues.forEach((cl) => cards.push({ type: "fact", ci, cat, item: qk(cl.k) }));
   });
-  if (S.round !== 2) cards.push({ type: "final", item: q(S.final.cat, S.final.idx) });
+  if (S.round !== 2) cards.push({ type: "final", item: qk(S.final.k) });
   cards.push({ type: "ready" });
   return cards;
 }
@@ -996,9 +2032,11 @@ function renderBoard() {
   const now = S.players[S.turn], botTurn = isBot(now);
   $("round-tag").textContent = S.round === 2 ? "Double Jeopardy · Double points!" : "Round 1";
   $("round-tag").classList.toggle("double", S.round === 2);
-  $("turn-line").textContent = botTurn ? `🤖 ${now.name} is picking a square…` : multi ? `${now.name}, pick a square!` : "Pick a square!";
+  $("turn-line").textContent = botTurn ? `🤖 ${now.name} is picking a square…`
+    : S.family ? `${isGrown(now) ? "🧑" : "🧒"} ${now.name}, pick a square! (${isGrown(now) ? "grown-up" : "kid"} questions)`
+    : multi ? `${now.name}, pick a square!` : "Pick a square!";
   $("board").innerHTML = S.cols.map((col, ci) => {
-    const cat = BANK.find((c) => c.id === col.cat);
+    const cat = catById(col.cat);
     return `<div class="col">
       <div class="cat-head ${COLORS[ci]}"><span class="e" aria-hidden="true">${cat.emoji}</span><span class="n">${esc(cat.name)}</span></div>
       ${col.clues.map((cl, ri) => cl.done
@@ -1037,31 +2075,60 @@ $("quit").addEventListener("click", () => {
 
 /* ----- Clue ----- */
 let current = null;
-function openClue(ci, ri) {
-  const col = S.cols[ci], cl = col.clues[ri];
-  const item = q(col.cat, cl.idx);
+/* Grown-up questions (Family game): say the answer out loud, tap to show it, then tap whether you got it. */
+function grownReveal(resEl, actEl, item, sayQ, onJudge) {
+  actEl.innerHTML = `<button type="button" class="btn" data-g="show">👀 Show the answer</button>${canSpeak ? `<button type="button" class="btn alt small" data-g="speak">🔊 Read to me</button>` : ""}`;
+  actEl.onclick = (e) => {
+    const b = e.target.closest("[data-g]"); if (!b) return;
+    const g = b.dataset.g;
+    if (g === "speak") sayQ();
+    else if (g === "show") {
+      hush(); sndTap();
+      const hint = resEl.parentNode.querySelector(".say-hint"); if (hint) hint.remove();
+      resEl.innerHTML = `<div class="answer-box"><small>The answer is</small><b>${esc(item.a)}</b></div>`;
+      actEl.innerHTML = `<button type="button" class="btn green" data-g="yes">✓ I got it</button><button type="button" class="btn red" data-g="no">✗ I missed it</button>`;
+      if (prefs.read) speak("The answer is " + item.a + ". Did you get it?");
+    } else { actEl.onclick = null; onJudge(g === "yes"); }
+  };
+}
+/* boost: a kid chose to try the grown-up question for triple points (Family game). */
+function openClue(ci, ri, boost) {
+  const col = S.cols[ci], cl = col.clues[ri], cat = catById(col.cat);
+  const player = S.players[S.turn];
+  const grown = !!(S.family && cl.p && (isGrown(player) || boost));
+  const item = grown ? gk(cl.p) : qk(cl.k);
   const isStar = S.stars.some((s) => s.c === ci && s.r === ri);
-  current = { ci, ri, item, isStar, value: cl.value * (isStar ? 2 : 1), order: shuffle([item.a, ...item.w]) };
+  const base = cl.value * (isStar ? 2 : 1);
+  const canBoost = !!(S.family && !grown && cl.p && !isBot(player));
+  current = { ci, ri, item, grown, boost: !!boost, isStar, value: base * (boost ? 3 : 1), order: grown ? [] : shuffle([item.a, ...item.w]) };
   const multi = S.players.length > 1;
   $("clue").innerHTML = `
-    <div class="clue-top"><span class="cat-pill ${COLORS[ci]}">${item.cat.emoji} ${esc(item.cat.name)}</span><span class="val">${current.value} points</span></div>
+    <div class="clue-top"><span class="cat-pill ${COLORS[ci]}">${cat.emoji} ${esc(cat.name)}</span><span class="val">${current.value} points</span></div>
     ${isStar ? `<div class="star-banner">⭐ Daily Double! Double points! ⭐</div>` : ""}
-    ${multi ? `<div class="who">${nameTag(S.players[S.turn])}'s turn</div>` : ""}
+    ${multi ? `<div class="who">${nameTag(player)}'s turn</div>` : ""}
+    ${boost ? `<div class="star-banner boost">🦸 Grown-up question · Triple points! 🦸</div>` : grown ? `<span class="grown-tag">Grown-up question</span>` : ""}
     <p class="q" id="clue-q">${esc(item.text)}</p>
-    <div class="choices" id="choices">
+    ${grown ? `<p class="say-hint">${boost ? "Say your answer out loud. Then a grown-up can show the answer and check it!" : "Say your answer out loud, then show the answer."}</p>` : `<div class="choices" id="choices">
       ${current.order.map((c, i) => `<button type="button" class="choice" data-i="${i}"><span class="k">${"ABCD"[i]}</span><span>${esc(c)}</span></button>`).join("")}
-    </div>
+    </div>`}
     <div id="clue-result"></div>
     <div class="clue-actions" id="clue-actions">
       ${canSpeak ? `<button type="button" class="btn alt small" id="clue-speak">🔊 Read to me</button>` : ""}
+      ${canBoost ? `<button type="button" class="btn small boost" id="clue-boost">🦸 Try the grown-up question for ${base * 3}!</button>` : ""}
     </div>`;
   $("modal").hidden = false;
-  if (isStar) sndStar(); else sndTap();
-  const sayQ = () => speak(item.text + " " + current.order.map((c, i) => "ABCD"[i] + ". " + c + ".").join(" "));
-  if ($("clue-speak")) $("clue-speak").onclick = sayQ;
+  if (isStar || boost) sndStar(); else sndTap();
+  const sayQ = () => speak(grown ? item.text : item.text + " " + current.order.map((c, i) => "ABCD"[i] + ". " + c + ".").join(" "));
   if (prefs.read) setTimeout(sayQ, isStar ? 700 : 150);
+  if (grown) {
+    grownReveal($("clue-result"), $("clue-actions"), item, sayQ, settle);
+    $("clue-actions").querySelector(".btn").focus({ preventScroll: true });
+    return;
+  }
+  if ($("clue-speak")) $("clue-speak").onclick = sayQ;
+  if ($("clue-boost")) $("clue-boost").onclick = () => { hush(); openClue(ci, ri, true); };
   $("choices").onclick = (e) => { const b = e.target.closest(".choice"); if (b && !current.answered) answer(+b.dataset.i); };
-  if (isBot(S.players[S.turn])) {
+  if (isBot(player)) {
     $("choices").classList.add("locked");
     $("clue-result").innerHTML = `<div class="thinking">🤖 ${esc(BOT_NAME)} is thinking<i>.</i><i>.</i><i>.</i></div>`;
     const sayText = item.text + " " + current.order.join(" ");
@@ -1077,27 +2144,34 @@ function openClue(ci, ri) {
 }
 function answer(i) {
   current.answered = true;
-  const picked = current.order[i], ok = picked === current.item.a;
-  const cl = S.cols[current.ci].clues[current.ri];
-  cl.done = true; cl.ok = ok; cl.by = S.turn;
-  const player = S.players[S.turn], bot = isBot(player);
-  if (!bot) { seen.add(current.item.key); save("bb-seen", [...seen]); }
-  if (ok) player.score += current.value;
   $("choices").querySelectorAll(".choice").forEach((b, j) => {
     b.disabled = true;
     if (current.order[j] === current.item.a) b.classList.add("right");
     else if (j === i) b.classList.add("wrong");
     else b.classList.add("dim");
   });
+  settle(current.order[i] === current.item.a);
+}
+/* Score the square and show the result (kid, grown-up, or Robo). */
+function settle(ok) {
+  current.answered = true;
+  const cl = S.cols[current.ci].clues[current.ri];
+  cl.done = true; cl.ok = ok; cl.by = S.turn;
+  const player = S.players[S.turn], bot = isBot(player), grown = current.grown;
+  if (grown) { grownSeen.add(current.item.key); save("bb-gseen", [...grownSeen]); }
+  else if (!bot) { seen.add(current.item.key); save("bb-seen", [...seen]); }
+  if (ok) player.score += current.value;
   const multi = S.players.length > 1;
-  const head = bot ? (ok ? `${BOT_NAME} got it!` : `${BOT_NAME} missed it!`) : ok ? pick(CHEERS) : pick(COMFORT);
-  const sub = ok ? `+${current.value} points${multi ? " for " + esc(player.name) : ""}!` : `The answer is <b>${esc(current.item.a)}</b>.`;
-  $("clue-result").innerHTML = `<div class="result ${ok ? "ok" : "no"}"><h3>${bot ? "🤖 " : ok ? "🎉 " : "💡 "}${head}</h3><p>${sub}</p><p>${current.item.f}</p></div>`;
+  const adult = isGrown(player);
+  const head = bot ? (ok ? `${BOT_NAME} got it!` : `${BOT_NAME} missed it!`) : ok ? (current.boost ? "WOW! You beat a grown-up question!" : pick(adult ? GROWN_CHEERS : CHEERS)) : pick(adult ? GROWN_COMFORT : COMFORT);
+  const sub = ok ? `+${current.value} points${multi ? " for " + esc(player.name) : ""}!${current.boost ? " Triple points!" : ""}` : grown ? "No points this time." : `The answer is <b>${esc(current.item.a)}</b>.`;
+  const shown = grown ? $("clue-result").innerHTML : "";
+  $("clue-result").innerHTML = shown + `<div class="result ${ok ? "ok" : "no"}"><h3>${bot ? "🤖 " : ok ? "🎉 " : "💡 "}${head}</h3><p>${sub}</p>${grown ? "" : `<p>${current.item.f}</p>`}</div>`;
   $("clue-actions").innerHTML = `<button type="button" class="btn green" id="clue-done">Back to the board ▶</button>`;
   $("clue-done").onclick = closeClue;
   $("clue-done").focus({ preventScroll: true });
-  if (ok) { sndRight(); if (!bot) confetti(current.isStar ? 220 : 110); } else sndWrong();
-  if (prefs.read) speak(head + " " + (ok ? "" : "The answer is " + current.item.a + ". ") + plain(current.item.f));
+  if (ok) { sndRight(); if (!bot) confetti(current.boost ? 280 : current.isStar ? 220 : 110); } else sndWrong();
+  if (prefs.read) speak(head + (grown ? "" : " " + (ok ? "" : "The answer is " + current.item.a + ". ") + plain(current.item.f)));
 }
 function closeClue() {
   hush();
@@ -1150,17 +2224,20 @@ function botWager(sc, opts) {
   return opts[Math.min(1, opts.length - 1)];
 }
 function renderFinal() {
-  const F = S.final, item = q(F.cat, F.idx), card = $("final-card");
+  const F = S.final, cat = catById(F.cat), card = $("final-card");
   const multi = S.players.length > 1;
   if (F.step === 0) {
     card.innerHTML = `<div class="trophy" aria-hidden="true">⭐</div><h2>The Final Jeopardy!</h2>
-      <p>One last question about <strong>${item.cat.emoji} ${esc(item.cat.name)}</strong>. First, choose how many points to bet.</p>
+      <p>One last question about <strong>${cat.emoji} ${esc(cat.name)}</strong>. First, choose how many points to bet.</p>
+      ${S.family ? `<p class="note">Kids get a kid question. Grown-ups get a grown-up question.</p>` : ""}
       <button type="button" class="btn big" id="f-go">Let's do it! ▶</button>`;
     $("f-go").onclick = () => { F.step = 1; renderFinal(); };
-    if (prefs.read) speak("The Final Jeopardy! One last question about " + item.cat.name + ". First, choose how many points to bet.");
+    if (prefs.read) speak("The Final Jeopardy! One last question about " + cat.name + ". First, choose how many points to bet.");
     return;
   }
   const p = S.players[F.player], bot = isBot(p);
+  const grown = !!(S.family && isGrown(p) && F.p);
+  const item = grown ? gk(F.p) : qk(F.k);
   if (F.step === 1) {
     const sc = p.score, opts = wagerOptions(sc);
     const choose = (o) => { F.wagers[F.player] = { v: o.v, free: sc <= 0 }; F.step = 2; sndTap(); renderFinal(); };
@@ -1187,34 +2264,44 @@ function renderFinal() {
     return;
   }
   if (F.step === 2) {
-    const order = F.order || (F.order = shuffle([item.a, ...item.w]));
-    card.innerHTML = `<span class="cat-pill">${item.cat.emoji} ${esc(item.cat.name)} · ${multi ? nameTag(p) + " · " : ""}bet ${F.wagers[F.player].v}</span>
+    const order = grown ? [] : F.order || (F.order = shuffle([item.a, ...item.w]));
+    card.innerHTML = `<span class="cat-pill">${cat.emoji} ${esc(cat.name)} · ${multi ? nameTag(p) + " · " : ""}bet ${F.wagers[F.player].v}</span>
+      ${grown ? `<span class="grown-tag">Grown-up question</span>` : ""}
       <p class="q" id="clue-q">${esc(item.text)}</p>
-      <div class="choices" id="f-choices">${order.map((c, i) => `<button type="button" class="choice" data-i="${i}"><span class="k">${"ABCD"[i]}</span><span>${esc(c)}</span></button>`).join("")}</div>
+      ${grown ? `<p class="say-hint">Say your answer out loud, then show the answer.</p>`
+        : `<div class="choices" id="f-choices">${order.map((c, i) => `<button type="button" class="choice" data-i="${i}"><span class="k">${"ABCD"[i]}</span><span>${esc(c)}</span></button>`).join("")}</div>`}
       <div id="f-result" style="width:100%"></div><div class="clue-actions" id="f-actions">${canSpeak ? `<button type="button" class="btn alt small" id="f-speak">🔊 Read to me</button>` : ""}</div>`;
-    const sayText = item.text + " " + order.map((c, i) => "ABCD"[i] + ". " + c + ".").join(" ");
+    const sayText = grown ? item.text : item.text + " " + order.map((c, i) => "ABCD"[i] + ". " + c + ".").join(" ");
     const sayQ = () => speak(sayText);
     if ($("f-speak")) $("f-speak").onclick = sayQ;
     if (prefs.read) setTimeout(sayQ, 150);
-    const finalAnswer = (i) => {
+    const settleFinal = (ok) => {
       if (F.answers[F.player] !== undefined) return;
-      const ok = order[i] === item.a, w = F.wagers[F.player];
+      const w = F.wagers[F.player];
       F.answers[F.player] = ok;
       if (ok) p.score += w.v; else if (!w.free) p.score -= w.v;
-      $("f-choices").querySelectorAll(".choice").forEach((x, j) => {
-        x.disabled = true;
-        if (order[j] === item.a) x.classList.add("right"); else if (j === i) x.classList.add("wrong"); else x.classList.add("dim");
-      });
-      const head = bot ? (ok ? `${p.name} got it!` : `${p.name} missed it!`) : ok ? pick(CHEERS) : pick(COMFORT);
-      $("f-result").innerHTML = `<div class="result ${ok ? "ok" : "no"}"><h3>${bot ? "🤖 " : ok ? "🎉 " : "💡 "}${head}</h3>
-        <p>${ok ? `+${w.v} points!` : w.free || w.v === 0 ? "No points lost." : `−${w.v} points.`}</p><p>${item.f}</p></div>`;
+      if (grown) { grownSeen.add(item.key); save("bb-gseen", [...grownSeen]); }
+      const head = bot ? (ok ? `${p.name} got it!` : `${p.name} missed it!`) : ok ? pick(grown ? GROWN_CHEERS : CHEERS) : pick(grown ? GROWN_COMFORT : COMFORT);
+      const shown = grown ? $("f-result").innerHTML : "";
+      $("f-result").innerHTML = shown + `<div class="result ${ok ? "ok" : "no"}"><h3>${bot ? "🤖 " : ok ? "🎉 " : "💡 "}${head}</h3>
+        <p>${ok ? `+${w.v} points!` : w.free || w.v === 0 ? "No points lost." : `−${w.v} points.`}</p>${grown ? "" : `<p>${item.f}</p>`}</div>`;
       const more = F.player < S.players.length - 1;
       $("f-actions").innerHTML = `<button type="button" class="btn green" id="f-next">${more ? `${nameTag(S.players[F.player + 1])}'s turn ▶` : "See who won! 🏆"}</button>`;
       $("f-next").onclick = () => { hush(); botCancel(); if (more) { F.player++; F.step = 1; } else F.step = 3; renderFinal(); };
       if (ok) { sndRight(); if (!bot) confetti(160); } else sndWrong();
-      if (prefs.read) speak(head + " " + (ok ? "" : "The answer is " + item.a + ". ") + plain(item.f));
+      if (prefs.read) speak(head + (grown ? "" : " " + (ok ? "" : "The answer is " + item.a + ". ") + plain(item.f)));
     };
-    if (bot) {
+    const finalAnswer = (i) => {
+      if (F.answers[F.player] !== undefined) return;
+      $("f-choices").querySelectorAll(".choice").forEach((x, j) => {
+        x.disabled = true;
+        if (order[j] === item.a) x.classList.add("right"); else if (j === i) x.classList.add("wrong"); else x.classList.add("dim");
+      });
+      settleFinal(order[i] === item.a);
+    };
+    if (grown) {
+      grownReveal($("f-result"), $("f-actions"), item, sayQ, settleFinal);
+    } else if (bot) {
       $("f-choices").classList.add("locked");
       $("f-result").innerHTML = `<div class="thinking">🤖 ${esc(p.name)} is thinking<i>.</i><i>.</i><i>.</i></div>`;
       botWait(readTime(sayText), () => {
@@ -1257,6 +2344,9 @@ function start(data) {
     S = data.S;
     // Games saved before the Double Jeopardy existed
     S.round = S.round || 1; S.past = S.past || []; S.stars = S.stars || (S.star ? [S.star] : []);
+    // Games saved before squares stored question keys
+    S.past.concat(S.cols).forEach((col) => col.clues.forEach((cl) => { if (!cl.k) cl.k = col.cat + "-" + cl.idx; }));
+    if (!S.final.k) S.final.k = S.final.cat + "-" + S.final.idx;
     if (S.screen === "lesson") { show("lesson"); renderLesson(); }
     else if (S.screen === "break") startRoundBreak();
     else if (S.screen === "final") { show("final"); renderFinal(); }
