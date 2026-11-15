@@ -96,6 +96,7 @@ h1, h2, h3 { font-family: var(--font-display); font-weight: 700; text-transform:
 .pl { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
 .roles { display: flex; gap: 6px; }
 .chip.mini { flex: 1; align-items: center; font-size: .95rem; padding: 5px 8px 4px; }
+.sub-h { margin: 4px 0 -4px; font-family: var(--font-display); font-weight: 600; text-transform: uppercase; letter-spacing: .03em; font-size: 1.1rem; color: var(--gold); }
 .chip.static { flex: none; cursor: default; background: var(--blue-deep); }
 .names input {
   width: 100%; box-sizing: border-box; font: inherit; font-size: 1.1rem; color: var(--line);
@@ -276,6 +277,8 @@ h1, h2, h3 { font-family: var(--font-display); font-weight: 700; text-transform:
           <span class="knob" aria-hidden="true"></span>
           <span><b>Read questions out loud</b><span class="t">Great for new readers</span></span>
         </button>
+        <p class="sub-h">Wrong answers on the board</p>
+        <div class="chips" id="penalty" role="group" aria-label="Wrong answers on the board"></div>
       </div>
       <div class="panel">
         <h2>Topics</h2>
@@ -1646,6 +1649,12 @@ const LEVELS = [
   { id: "big",    name: "4th–5th grade", sub: "Big kids", range: [4, 5] },
   { id: "all",    name: "All grades",    sub: "1st up to 5th", range: [1, 5] },
 ];
+/* Real Jeopardy takes away the square's value for a wrong answer. Off by default for kids. */
+const PENALTIES = [
+  { id: "off",   name: "No penalty",            sub: "A miss is just 0 points" },
+  { id: "grown", name: "Grown-ups lose points", sub: "Kids are safe", family: true },
+  { id: "all",   name: "Everyone loses points", sub: "Real Jeopardy rules" },
+];
 const TOPICS = [
   { id: "mix",    name: "Mix it up",    sub: "School stuff and favorites" },
   { id: "school", name: "School stuff", sub: "Science, math, words, and more" },
@@ -1663,7 +1672,7 @@ const DEFAULT_NAMES = ["Player 1", "Player 2", "Player 3", "Player 4"];
 function load(key, fallback) { try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : fallback; } catch (e) { return fallback; } }
 function save(key, val) { try { localStorage.setItem(key, JSON.stringify(val)); } catch (e) {} }
 
-let prefs = Object.assign({ count: 1, names: DEFAULT_NAMES.slice(), level: "all", read: true, bot: false, botLevel: "medium", topics: "mix", family: false, roles: ["kid", "grown", "grown", "kid"] }, load("bb-prefs", {}));
+let prefs = Object.assign({ count: 1, names: DEFAULT_NAMES.slice(), level: "all", read: true, bot: false, botLevel: "medium", topics: "mix", family: false, roles: ["kid", "grown", "grown", "kid"], penalty: "off" }, load("bb-prefs", {}));
 
 /* ===== Computer player ===== */
 const BOT_NAME = "Robo";
@@ -1677,6 +1686,9 @@ const botLevel = () => BOT_LEVELS.find((l) => l.id === prefs.botLevel) || BOT_LE
 const botGetsIt = (row) => Math.random() < botLevel().acc - row * 0.05;
 const isBot = (p) => !!(p && p.bot);
 const isGrown = (p) => !!(p && p.role === "grown");
+/* "Grown-ups only" means nobody outside a Family game. */
+const penaltySetting = () => (prefs.penalty === "grown" && !prefs.family ? "off" : prefs.penalty || "off");
+const losesPoints = (p) => S.penalty === "all" || (S.penalty === "grown" && S.family && isGrown(p));
 const nameTag = (p) => (isBot(p) ? "🤖 " : S && S.family ? (isGrown(p) ? "🧑 " : "🧒 ") : "") + esc(p.name);
 
 let botTimer = null, botToken = 0;
@@ -1790,6 +1802,7 @@ function newGame() {
   S = {
     screen: "lesson",
     family,
+    penalty: penaltySetting(),
     round: 1,
     players: prefs.names.slice(0, prefs.count).map((n, i) => ({ name: (n || "").trim() || DEFAULT_NAMES[i], score: 0, role: family ? prefs.roles[i] || "kid" : "kid" }))
       .concat(prefs.bot && !family ? [{ name: BOT_NAME, score: 0, bot: true }] : []),
@@ -1896,6 +1909,8 @@ function renderHome() {
   $("level-hint").textContent = fam ? "This sets the kid questions. Grown-ups get real Jeopardy-style clues." : "Easy questions are worth 100. The hardest are worth 500.";
   $("topics-hint").textContent = fam ? "Everyone shares these topics. Each game picks 5 of them." : "Favorites are books, sports, movies, and TV.";
   $("topics").hidden = fam;
+  $("penalty").innerHTML = PENALTIES.filter((o) => fam || !o.family).map((o) =>
+    `<button type="button" class="chip" data-pen="${o.id}" aria-pressed="${penaltySetting() === o.id}">${o.name}<small>${o.sub}</small></button>`).join("");
   $("fam-topics").hidden = !fam;
   $("fam-topics").innerHTML = FAMILY.map((t) => `<span class="chip mini static">${t.emoji} ${esc(t.name)}</span>`).join("");
   $("levels").innerHTML = LEVELS.map((l) =>
@@ -1937,6 +1952,10 @@ $("player-count").addEventListener("click", (e) => {
 $("levels").addEventListener("click", (e) => {
   const b = e.target.closest("[data-level]"); if (!b) return;
   prefs.level = b.dataset.level; save("bb-prefs", prefs); renderHome(); sndTap();
+});
+$("penalty").addEventListener("click", (e) => {
+  const b = e.target.closest("[data-pen]"); if (!b) return;
+  readNames(); prefs.penalty = b.dataset.pen; save("bb-prefs", prefs); renderHome(); sndTap();
 });
 $("read-toggle").addEventListener("click", () => { prefs.read = !prefs.read; save("bb-prefs", prefs); renderHome(); sndTap(); });
 $("go-lesson").addEventListener("click", () => { readNames(); newGame(); startLesson(); });
@@ -2019,7 +2038,8 @@ function renderBoard() {
   $("scores").innerHTML = S.players.map((p, i) =>
     `<div class="score ${multi && i === S.turn ? "turn" : ""}"><span>${nameTag(p)}</span><span class="pts">${p.score}</span></div>`).join("");
   const now = S.players[S.turn], botTurn = isBot(now);
-  $("round-tag").textContent = S.round === 2 ? "Double Jeopardy · Double points!" : "Round 1";
+  $("round-tag").textContent = (S.round === 2 ? "Double Jeopardy · Double points!" : "Round 1")
+    + (S.penalty === "all" ? " · Misses lose points" : S.penalty === "grown" && S.family ? " · Grown-up misses lose points" : "");
   $("round-tag").classList.toggle("double", S.round === 2);
   $("turn-line").textContent = botTurn ? `🤖 ${now.name} is picking a square…`
     : S.family ? `${isGrown(now) ? "🧑" : "🧒"} ${now.name}, pick a square! (${isGrown(now) ? "grown-up" : "kid"} questions)`
@@ -2089,7 +2109,7 @@ function openClue(ci, ri, boost) {
   const isStar = S.stars.some((s) => s.c === ci && s.r === ri);
   const base = cl.value * (isStar ? 2 : 1);
   const canBoost = !!(S.family && !grown && cl.p && !isBot(player));
-  current = { ci, ri, item, grown, boost: !!boost, isStar, value: base * (boost ? 3 : 1), order: grown ? [] : shuffle([item.a, ...item.w]) };
+  current = { ci, ri, item, grown, boost: !!boost, isStar, value: base * (boost ? 3 : 1), risk: base, order: grown ? [] : shuffle([item.a, ...item.w]) };
   const multi = S.players.length > 1;
   $("clue").innerHTML = `
     <div class="clue-top"><span class="cat-pill ${COLORS[ci]}">${cat.emoji} ${esc(cat.name)}</span><span class="val">${current.value} points</span></div>
@@ -2103,7 +2123,7 @@ function openClue(ci, ri, boost) {
     <div id="clue-result"></div>
     <div class="clue-actions" id="clue-actions">
       ${canSpeak ? `<button type="button" class="btn alt small" id="clue-speak">🔊 Read to me</button>` : ""}
-      ${canBoost ? `<button type="button" class="btn small boost" id="clue-boost">🦸 Try the grown-up question for ${base * 3}!</button>` : ""}
+      ${canBoost ? `<button type="button" class="btn small boost" id="clue-boost">🦸 Try the grown-up question for ${base * 3}!${losesPoints(player) ? ` (miss = −${base})` : ""}</button>` : ""}
     </div>`;
   $("modal").hidden = false;
   if (isStar || boost) sndStar(); else sndTap();
@@ -2149,11 +2169,13 @@ function settle(ok) {
   const player = S.players[S.turn], bot = isBot(player), grown = current.grown;
   if (grown) { grownSeen.add(current.item.key); save("bb-gseen", [...grownSeen]); }
   else if (!bot) { seen.add(current.item.key); save("bb-seen", [...seen]); }
-  if (ok) player.score += current.value;
+  const lose = !ok && losesPoints(player);
+  if (ok) player.score += current.value; else if (lose) player.score -= current.risk; // a miss only costs the square (doubled on a Daily Double), never the triple
   const multi = S.players.length > 1;
   const adult = isGrown(player);
   const head = bot ? (ok ? `${BOT_NAME} got it!` : `${BOT_NAME} missed it!`) : ok ? (current.boost ? "WOW! You beat a grown-up question!" : pick(adult ? GROWN_CHEERS : CHEERS)) : pick(adult ? GROWN_COMFORT : COMFORT);
-  const sub = ok ? `+${current.value} points${multi ? " for " + esc(player.name) : ""}!${current.boost ? " Triple points!" : ""}` : grown ? "No points this time." : `The answer is <b>${esc(current.item.a)}</b>.`;
+  const sub = ok ? `+${current.value} points${multi ? " for " + esc(player.name) : ""}!${current.boost ? " Triple points!" : ""}`
+    : ((grown ? (lose ? "" : "No points this time.") : `The answer is <b>${esc(current.item.a)}</b>.`) + (lose ? ` −${current.risk} points.` : "")).trim();
   const shown = grown ? $("clue-result").innerHTML : "";
   $("clue-result").innerHTML = shown + `<div class="result ${ok ? "ok" : "no"}"><h3>${bot ? "🤖 " : ok ? "🎉 " : "💡 "}${head}</h3><p>${sub}</p>${grown ? "" : `<p>${current.item.f}</p>`}</div>`;
   $("clue-actions").innerHTML = `<button type="button" class="btn green" id="clue-done">Back to the board ▶</button>`;
