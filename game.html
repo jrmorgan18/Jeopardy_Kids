@@ -233,6 +233,8 @@ h1, h2, h3 { font-family: var(--font-display); font-weight: 700; text-transform:
 .center-card p { margin: 0; font-size: 1.2rem; line-height: 1.45; max-width: 36ch; }
 .center-card .note { font-size: 1rem; color: var(--soft); }
 .wagers { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; }
+#clue .note { font-size: 1rem; color: var(--soft); margin: 4px 0 12px; text-align: center; }
+#clue .wagers { margin: 8px 0; }
 .podium { display: flex; flex-direction: column; gap: 10px; width: 100%; max-width: 460px; }
 .podium .row { display: flex; align-items: center; gap: 12px; border: 3px solid var(--line); border-radius: 8px; padding: 8px 14px 6px; background: var(--blue-deep); font-family: var(--font-display); font-weight: 600; text-transform: uppercase; font-size: 1.4rem; }
 .podium .row.win { background: var(--gold); color: var(--line); box-shadow: 0 4px 0 var(--line); }
@@ -2100,20 +2102,64 @@ function grownReveal(resEl, actEl, item, sayQ, onJudge) {
     } else { actEl.onclick = null; onJudge(g === "yes"); }
   };
 }
-/* boost: a kid chose to try the grown-up question for triple points (Family game). */
-function openClue(ci, ri, boost) {
+/* Bets for a Daily Double or the Final: 0, a quarter, half, three quarters, or the most you can bet. */
+function betOptions(max) {
+  const names = ["Play it safe", "A quarter", "Half", "Three quarters", "All in!"];
+  const out = [], seenV = new Set();
+  [0, 0.25, 0.5, 0.75, 1].forEach((f, i) => {
+    const v = f === 1 ? max : Math.round((max * f) / 100) * 100;
+    if ((f > 0 && v <= 0) || v > max || seenV.has(v)) return;
+    seenV.add(v); out.push({ v, t: names[i] });
+  });
+  return out;
+}
+const betButtons = (opts) => `<div class="wagers">${opts.map((o, i) => `<button type="button" class="btn ${i === opts.length - 1 && o.v > 0 ? "" : "alt"}" data-v="${o.v}">${o.t} (${o.v})</button>`).join("")}</div>`;
+/* Daily Double: choose a bet first. You can bet up to your score, or up to double the square if you have less. */
+function openStarBet(ci, ri) {
   const col = S.cols[ci], cl = col.clues[ri], cat = catById(col.cat);
+  const player = S.players[S.turn], bot = isBot(player), multi = S.players.length > 1;
+  const sc = player.score, max = Math.max(sc, cl.value * 2), opts = betOptions(max);
+  current = { ci, ri, betting: true };
+  $("clue").innerHTML = `
+    <div class="clue-top"><span class="cat-pill ${COLORS[ci]}">${cat.emoji} ${esc(cat.name)}</span><span class="val">${cl.value} square</span></div>
+    <div class="star-banner">⭐ Daily Double! ⭐</div>
+    ${multi ? `<div class="who">${nameTag(player)}'s turn</div>` : ""}
+    <p>${bot ? esc(player.name) + " has" : "You have"} <strong>${sc}</strong> points. ${bot ? "" : "How many do you want to bet? You can bet up to <strong>" + max + "</strong>."}</p>
+    <p class="note">Right answer: win your bet. Miss: lose your bet.</p>
+    <div id="clue-result">${bot ? `<div class="thinking">🤖 Choosing a bet<i>.</i><i>.</i><i>.</i></div>` : betButtons(opts)}</div>
+    <div class="clue-actions" id="clue-actions"></div>`;
+  $("modal").hidden = false;
+  sndStar();
+  const go = (v) => { hush(); sndTap(); openClue(ci, ri, false, v); };
+  if (bot) {
+    const o = botWager(sc, opts.filter((x) => x.v > 0));
+    botWait(1800, () => {
+      $("clue-result").querySelector(".thinking").textContent = `${player.name} bets ${o.v}!`;
+      if (prefs.read) speak(player.name + " bets " + o.v + "!");
+      botWait(1400, () => go(o.v));
+    });
+    if (prefs.read) speak("Daily Double!");
+    return;
+  }
+  $("clue-result").onclick = (e) => { const b = e.target.closest("[data-v]"); if (b) { $("clue-result").onclick = null; go(+b.dataset.v); } };
+  const first = $("clue-result").querySelector(".btn"); if (first) first.focus({ preventScroll: true });
+  if (prefs.read) speak("Daily Double! " + (multi ? player.name + ", you" : "You") + " have " + sc + " points. How many do you want to bet? You can bet up to " + max + ".");
+}
+/* boost: a kid chose to try the grown-up question for triple points (Family game). bet: the Daily Double bet. */
+function openClue(ci, ri, boost, bet) {
+  const col = S.cols[ci], cl = col.clues[ri], cat = catById(col.cat);
+  const isStar = S.stars.some((s) => s.c === ci && s.r === ri);
+  if (isStar && bet === undefined) return openStarBet(ci, ri);
   const player = S.players[S.turn];
   const grown = !!(S.family && cl.p && (isGrown(player) || boost));
   const item = grown ? gk(cl.p) : qk(cl.k);
-  const isStar = S.stars.some((s) => s.c === ci && s.r === ri);
-  const base = cl.value * (isStar ? 2 : 1);
-  const canBoost = !!(S.family && !grown && cl.p && !isBot(player));
+  const base = isStar ? bet : cl.value;
+  const canBoost = !!(S.family && !grown && cl.p && !isBot(player) && base > 0);
   current = { ci, ri, item, grown, boost: !!boost, isStar, value: base * (boost ? 3 : 1), risk: base, order: grown ? [] : shuffle([item.a, ...item.w]) };
   const multi = S.players.length > 1;
   $("clue").innerHTML = `
     <div class="clue-top"><span class="cat-pill ${COLORS[ci]}">${cat.emoji} ${esc(cat.name)}</span><span class="val">${current.value} points</span></div>
-    ${isStar ? `<div class="star-banner">⭐ Daily Double! Double points! ⭐</div>` : ""}
+    ${isStar ? `<div class="star-banner">⭐ Daily Double! You bet ${bet}! ⭐</div>` : ""}
     ${multi ? `<div class="who">${nameTag(player)}'s turn</div>` : ""}
     ${boost ? `<div class="star-banner boost">🦸 Grown-up question · Triple points! 🦸</div>` : grown ? `<span class="grown-tag">Grown-up question</span>` : ""}
     <p class="q" id="clue-q">${esc(item.text)}</p>
@@ -2123,25 +2169,25 @@ function openClue(ci, ri, boost) {
     <div id="clue-result"></div>
     <div class="clue-actions" id="clue-actions">
       ${canSpeak ? `<button type="button" class="btn alt small" id="clue-speak">🔊 Read to me</button>` : ""}
-      ${canBoost ? `<button type="button" class="btn small boost" id="clue-boost">🦸 Try the grown-up question for ${base * 3}!${losesPoints(player) ? ` (miss = −${base})` : ""}</button>` : ""}
+      ${canBoost ? `<button type="button" class="btn small boost" id="clue-boost">🦸 Try the grown-up question for ${base * 3}!${isStar || losesPoints(player) ? ` (miss = −${base})` : ""}</button>` : ""}
     </div>`;
   $("modal").hidden = false;
-  if (isStar || boost) sndStar(); else sndTap();
+  if (boost) sndStar(); else sndTap();
   const sayQ = () => speak(grown ? item.text : item.text + " " + current.order.map((c, i) => "ABCD"[i] + ". " + c + ".").join(" "));
-  if (prefs.read) setTimeout(sayQ, isStar ? 700 : 150);
+  if (prefs.read) setTimeout(sayQ, 150);
   if (grown) {
     grownReveal($("clue-result"), $("clue-actions"), item, sayQ, settle);
     $("clue-actions").querySelector(".btn").focus({ preventScroll: true });
     return;
   }
   if ($("clue-speak")) $("clue-speak").onclick = sayQ;
-  if ($("clue-boost")) $("clue-boost").onclick = () => { hush(); openClue(ci, ri, true); };
+  if ($("clue-boost")) $("clue-boost").onclick = () => { hush(); openClue(ci, ri, true, bet); };
   $("choices").onclick = (e) => { const b = e.target.closest(".choice"); if (b && !current.answered) answer(+b.dataset.i); };
   if (isBot(player)) {
     $("choices").classList.add("locked");
     $("clue-result").innerHTML = `<div class="thinking">🤖 ${esc(BOT_NAME)} is thinking<i>.</i><i>.</i><i>.</i></div>`;
     const sayText = item.text + " " + current.order.join(" ");
-    botWait(readTime(sayText) + (isStar ? 700 : 0), () => {
+    botWait(readTime(sayText), () => {
       const right = current.order.indexOf(item.a);
       const i = botGetsIt(ri) ? right : pick([0, 1, 2, 3].filter((j) => j !== right));
       $("choices").children[i].classList.add("bot-pick");
@@ -2169,8 +2215,8 @@ function settle(ok) {
   const player = S.players[S.turn], bot = isBot(player), grown = current.grown;
   if (grown) { grownSeen.add(current.item.key); save("bb-gseen", [...grownSeen]); }
   else if (!bot) { seen.add(current.item.key); save("bb-seen", [...seen]); }
-  const lose = !ok && losesPoints(player);
-  if (ok) player.score += current.value; else if (lose) player.score -= current.risk; // a miss only costs the square (doubled on a Daily Double), never the triple
+  const lose = !ok && current.risk > 0 && (current.isStar || losesPoints(player));
+  if (ok) player.score += current.value; else if (lose) player.score -= current.risk; // a miss costs the square (or the Daily Double bet), never the triple
   const multi = S.players.length > 1;
   const adult = isGrown(player);
   const head = bot ? (ok ? `${BOT_NAME} got it!` : `${BOT_NAME} missed it!`) : ok ? (current.boost ? "WOW! You beat a grown-up question!" : pick(adult ? GROWN_CHEERS : CHEERS)) : pick(adult ? GROWN_COMFORT : COMFORT);
@@ -2221,18 +2267,15 @@ function renderRoundBreak() {
 /* ----- Final Jeopardy ----- */
 function startFinal() { S.final.step = 0; S.final.player = 0; S.final.wagers = []; S.final.answers = []; S.final.order = null; show("final"); renderFinal(); }
 function wagerOptions(sc) {
-  const opts = sc > 0
-    ? [{ v: 0, t: "Keep my points safe" }, { v: Math.max(100, Math.round(sc / 200) * 100), t: "Bet about half" }, { v: sc, t: "Bet it all!" }]
-    : [{ v: 500, t: "Free try!" }];
-  const seenV = new Set();
-  return opts.filter((o) => (seenV.has(o.v) ? false : seenV.add(o.v)));
+  return sc > 0 ? betOptions(sc) : [{ v: 500, t: "Free try!" }];
 }
 function botWager(sc, opts) {
-  if (sc <= 0) return opts[0];
+  if (sc <= 0 || opts.length === 1) return opts[0];
   if (prefs.botLevel === "easy") return pick(opts);
   const best = Math.max(0, ...S.players.filter((p) => !isBot(p)).map((p) => p.score));
-  if (prefs.botLevel === "hard") return sc > best * 2 ? opts[0] : sc <= best ? opts[opts.length - 1] : opts[Math.min(1, opts.length - 1)];
-  return opts[Math.min(1, opts.length - 1)];
+  const mid = opts[Math.floor(opts.length / 2)];
+  if (prefs.botLevel === "hard") return sc > best * 2 ? opts[1] : sc <= best ? opts[opts.length - 1] : mid;
+  return mid;
 }
 function renderFinal() {
   const F = S.final, cat = catById(F.cat), card = $("final-card");
@@ -2265,7 +2308,7 @@ function renderFinal() {
     }
     card.innerHTML = `<h2>${multi ? esc(p.name) + ", place your bet" : "Place your bet"}</h2>
       <p>You have <strong>${sc}</strong> points. If you're right, you win your bet. If you miss, you lose it.</p>
-      <div class="wagers">${opts.map((o) => `<button type="button" class="btn ${o.v === sc && sc > 0 ? "" : "alt"}" data-v="${o.v}">${o.t} (${o.v})</button>`).join("")}</div>
+      ${betButtons(opts)}
       ${sc > 0 ? "" : `<p class="note">No points yet? This one is a free try. You can't lose anything!</p>`}`;
     card.querySelector(".wagers").onclick = (e) => {
       const b = e.target.closest("[data-v]"); if (!b) return;
