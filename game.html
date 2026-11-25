@@ -207,6 +207,8 @@ h1, h2, h3 { font-family: var(--font-display); font-weight: 700; text-transform:
 .result { border: 3px solid var(--line); border-radius: 10px; padding: 12px 16px; display: flex; flex-direction: column; gap: 6px; text-align: center; }
 .result.ok { background: var(--right-bg); }
 .result.no { background: var(--wrong-bg); }
+.result.pass { background: rgba(255,255,255,.1); }
+.who small { display: block; font-size: .85rem; color: var(--gold); text-transform: none; letter-spacing: 0; margin-top: 2px; }
 .result h3 { font-size: clamp(1.6rem, 4.5vw, 2.4rem); color: var(--gold); text-shadow: 2px 2px 0 var(--line); }
 .result p { margin: 0; font-size: 1.1rem; line-height: 1.45; }
 .result p b { background: var(--gold); color: var(--line); padding: 0 .2em; border-radius: 4px; }
@@ -2356,22 +2358,25 @@ function openStarBet(ci, ri) {
   const first = $("clue-result").querySelector(".btn"); if (first) first.focus({ preventScroll: true });
   if (prefs.read) speak("Daily Double! " + (multi ? player.name + ", you" : "You") + " have " + sc + " points. How many do you want to bet? You can bet up to " + max + ".");
 }
-/* boost: a kid chose to try the grown-up question for triple points (Family game). bet: the Daily Double bet. */
-function openClue(ci, ri, boost, bet) {
+/* boost: a kid chose to try the grown-up question for triple points (Family game). bet: the Daily Double bet.
+   who: the player answering (the picker, or the next player after a pass). passed: players who already passed this square. */
+function openClue(ci, ri, boost, bet, who = S.turn, passed = []) {
   const col = S.cols[ci], cl = col.clues[ri], cat = catById(col.cat);
   const isStar = S.stars.some((s) => s.c === ci && s.r === ri);
   if (isStar && bet === undefined) return openStarBet(ci, ri);
-  const player = S.players[S.turn];
+  const player = S.players[who];
   const grown = !!(S.family && cl.p && (isGrown(player) || boost));
   const item = grown ? gk(cl.p) : qk(cl.k);
   const base = isStar ? bet : cl.value;
   const canBoost = !!(S.family && !grown && cl.p && !isBot(player) && base > 0);
-  current = { ci, ri, item, grown, boost: !!boost, isStar, value: base * (boost ? 3 : 1), risk: base, order: grown ? [] : shuffle([item.a, ...item.w]) };
+  current = { ci, ri, item, grown, boost: !!boost, isStar, bet, who, passed, value: base * (boost ? 3 : 1), risk: base, order: grown ? [] : shuffle([item.a, ...item.w]) };
   const multi = S.players.length > 1;
+  const passer = passed.length ? S.players[passed[passed.length - 1]] : null;
+  const passBtn = isBot(player) ? "" : `<button type="button" class="btn alt small" id="clue-pass">🙅 Pass</button>`;
   $("clue").innerHTML = `
     <div class="clue-top"><span class="cat-pill ${COLORS[ci]}">${cat.emoji} ${esc(cat.name)}</span><span class="val">${current.value} points</span></div>
     ${isStar ? `<div class="star-banner">⭐ Daily Double! You bet ${bet}! ⭐</div>` : ""}
-    ${multi ? `<div class="who">${nameTag(player)}'s turn</div>` : ""}
+    ${multi ? `<div class="who">${nameTag(player)}'s turn${passer ? ` <small>${esc(passer.name)} passed. Your chance!</small>` : ""}</div>` : ""}
     ${boost ? `<div class="star-banner boost">🦸 Grown-up question · Triple points! 🦸</div>` : grown ? `<span class="grown-tag">Grown-up question</span>` : ""}
     <p class="q" id="clue-q">${esc(item.text)}</p>
     ${grown ? `<p class="say-hint">${boost ? "Say your answer out loud. Then a grown-up can show the answer and check it!" : "Say your answer out loud, then show the answer."}</p>` : `<div class="choices" id="choices">
@@ -2381,18 +2386,21 @@ function openClue(ci, ri, boost, bet) {
     <div class="clue-actions" id="clue-actions">
       ${canSpeak ? `<button type="button" class="btn alt small" id="clue-speak">🔊 Read to me</button>` : ""}
       ${canBoost ? `<button type="button" class="btn small boost" id="clue-boost">🦸 Try the grown-up question for ${base * 3}!${isStar || losesPoints(player) ? ` (miss = −${base})` : ""}</button>` : ""}
+      ${passBtn}
     </div>`;
   $("modal").hidden = false;
   if (boost) sndStar(); else sndTap();
   const sayQ = () => speak(grown ? item.text : item.text + " " + current.order.map((c, i) => "ABCD"[i] + ". " + c + ".").join(" "));
-  if (prefs.read) setTimeout(sayQ, 150);
+  if (prefs.read) setTimeout(() => { if (passer) speak(passer.name + " passed. " + player.name + ", your chance! "); sayQ(); }, 150);
   if (grown) {
     grownReveal($("clue-result"), $("clue-actions"), item, sayQ, settle);
+    if (passBtn) { $("clue-actions").insertAdjacentHTML("beforeend", passBtn); $("clue-pass").onclick = passClue; } // gone once the answer is shown
     $("clue-actions").querySelector(".btn").focus({ preventScroll: true });
     return;
   }
   if ($("clue-speak")) $("clue-speak").onclick = sayQ;
-  if ($("clue-boost")) $("clue-boost").onclick = () => { hush(); openClue(ci, ri, true, bet); };
+  if ($("clue-pass")) $("clue-pass").onclick = passClue;
+  if ($("clue-boost")) $("clue-boost").onclick = () => { hush(); openClue(ci, ri, true, bet, who, passed); };
   $("choices").onclick = (e) => { const b = e.target.closest(".choice"); if (b && !current.answered) answer(+b.dataset.i); };
   if (isBot(player)) {
     $("choices").classList.add("locked");
@@ -2422,8 +2430,8 @@ function answer(i) {
 function settle(ok) {
   current.answered = true;
   const cl = S.cols[current.ci].clues[current.ri];
-  cl.done = true; cl.ok = ok; cl.by = S.turn;
-  const player = S.players[S.turn], bot = isBot(player), grown = current.grown;
+  cl.done = true; cl.ok = ok; cl.by = current.who;
+  const player = S.players[current.who], bot = isBot(player), grown = current.grown;
   if (grown) { grownSeen.add(current.item.key); save("bb-gseen", [...grownSeen]); }
   else if (!bot) { seen.add(current.item.key); save("bb-seen", [...seen]); }
   const lose = !ok && current.risk > 0 && (current.isStar || losesPoints(player));
@@ -2440,6 +2448,29 @@ function settle(ok) {
   $("clue-done").focus({ preventScroll: true });
   if (ok) { sndRight(); if (!bot) confetti(current.boost ? 280 : current.isStar ? 220 : 110); } else sndWrong();
   if (prefs.read) speak(head + (grown ? "" : " " + (ok ? "" : "The answer is " + current.item.a + ". ") + plain(current.item.f)));
+}
+/* Pass: no points won or lost. The next player who hasn't passed gets their own version of the question.
+   A Daily Double belongs to the picker only, so passing it (or everyone passing) leaves the square unanswered. */
+function passClue() {
+  if (!current || current.answered) return;
+  hush(); sndTap();
+  const { ci, ri, who, isStar } = current, passed = current.passed.concat(who);
+  const n = S.players.length;
+  let next = -1;
+  if (!isStar) for (let k = 1; k < n; k++) { const j = (who + k) % n; if (!passed.includes(j)) { next = j; break; } }
+  if (next >= 0) return openClue(ci, ri, false, undefined, next, passed);
+  current.answered = true;
+  const cl = S.cols[ci].clues[ri];
+  cl.done = true; cl.ok = null; cl.by = null;
+  const multi = n > 1 && !isStar;
+  const head = multi ? "Everybody passed!" : "You passed!";
+  const hint = $("clue").querySelector(".say-hint"); if (hint) hint.remove();
+  if (!current.grown) $("choices").querySelectorAll(".choice").forEach((b, j) => { b.disabled = true; b.classList.add(current.order[j] === current.item.a ? "right" : "dim"); });
+  $("clue-result").innerHTML = `<div class="result pass"><h3>🙅 ${head}</h3><p>No points won or lost. The answer is <b>${esc(current.item.a)}</b>.</p>${current.grown ? "" : `<p>${current.item.f}</p>`}</div>`;
+  $("clue-actions").innerHTML = `<button type="button" class="btn green" id="clue-done">Back to the board ▶</button>`;
+  $("clue-done").onclick = closeClue;
+  $("clue-done").focus({ preventScroll: true });
+  if (prefs.read) speak(head + " The answer is " + current.item.a + ". " + (current.grown ? "" : plain(current.item.f)));
 }
 function closeClue() {
   hush();
