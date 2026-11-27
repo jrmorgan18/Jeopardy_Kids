@@ -283,6 +283,8 @@ h1, h2, h3 { font-family: var(--font-display); font-weight: 700; text-transform:
         </button>
         <p class="sub-h">Wrong answers on the board</p>
         <div class="chips" id="penalty" role="group" aria-label="Wrong answers on the board"></div>
+        <p class="sub-h">How kids answer</p>
+        <div class="chips" id="answers" role="group" aria-label="How kids answer"></div>
       </div>
       <div class="panel">
         <h2>Topics</h2>
@@ -670,6 +672,138 @@ const BANK = [
   [5,"🎹","Which famous composer started writing music when he was only 5 years old?","Mozart",["Beethoven","Bach","Chopin"],"<b>Mozart</b> wrote his first music at age 5 and played for kings and queens as a kid."],
   [5,"🖼️","Which Spanish artist painted faces with both eyes on the same side, in a style called Cubism?","Pablo Picasso",["Claude Monet","Vincent van Gogh","Frida Kahlo"],"<b>Pablo Picasso</b> helped invent Cubism, painting things from many sides at once."],
  ]},
+ { id: "science", name: "Science Lab", emoji: "🧪", intro: "Put on your goggles! It's time for science.", qs: [
+  [1,"🧲","Which of these will stick to a magnet?","A paper clip",["A wooden block","A plastic cup","A rubber ball"],"Magnets pull on things made of iron and steel, like a <b>paper clip</b>."],
+  [1,"🧊","What happens to ice when it gets warm?","It melts",["It grows","It turns to rock","It gets colder"],"When ice gets warm, <b>it melts</b> and turns back into water."],
+  [1,"🔍","What does a magnifying glass do?","Makes small things look bigger",["Makes things louder","Measures how hot it is","Tells time"],"A magnifying glass <b>makes small things look bigger</b>, so you can see tiny details."],
+  [2,"💧","Is water a solid, a liquid, or a gas?","A liquid",["A solid","A gas","A rock"],"Water is a <b>liquid</b>. It flows and takes the shape of its cup."],
+  [2,"👤","What makes a shadow?","Something blocking the light",["The wind","Water","Loud sounds"],"A shadow happens when <b>something blocks the light</b>."],
+  [2,"🏔️","What do we call a sound that bounces back to you, like when you shout in a cave?","An echo",["A shadow","A whisper","A rainbow"],"A sound that bounces back is an <b>echo</b>. Hello, hello, hello!"],
+  [2,"🪞","What does a mirror do to light?","Bounces it back",["Eats it up","Turns it off","Makes it louder"],"A mirror <b>bounces light back</b>. Scientists call that reflecting."],
+  [3,"🧪","What are the three states of matter?","Solid, liquid, gas",["Hot, warm, cold","Rock, paper, scissors","Big, medium, small"],"The three states of matter are <b>solid, liquid, and gas</b>, like ice, water, and steam."],
+  [3,"🏋️","What do scientists call a push or a pull?","A force",["A shadow","An echo","A magnet"],"A push or a pull is a <b>force</b>. Kicking a ball uses a force!"],
+  [3,"🧲","What are the two ends of a magnet called?","North and south poles",["Top and bottom","Hot and cold","Left and right"],"Every magnet has a <b>north pole and a south pole</b>. Opposite poles pull together."],
+  [3,"🌈","When white light shines through a prism, what does it split into?","A rainbow of colors",["Darkness","Bubbles","Sparks"],"A prism splits white light into <b>a rainbow of colors</b>. White light is all the colors mixed together!"],
+  [4,"⚡","What do we call materials that let electricity flow through them easily, like copper?","Conductors",["Insulators","Magnets","Batteries"],"Materials that carry electricity well are <b>conductors</b>. Rubber and plastic are insulators, which block it."],
+  [4,"📐","Which simple machine is really just a ramp?","An inclined plane",["A lever","A pulley","A wheel and axle"],"A ramp is an <b>inclined plane</b>. It makes it easier to move heavy things up."],
+  [4,"🛷","What force slows things down when they rub against each other?","Friction",["Gravity","Magnetism","Electricity"],"<b>Friction</b> slows things down when they rub. That's why it's hard to slide on carpet."],
+  [4,"🌩️","Which travels faster, light or sound?","Light",["Sound","They're the same","Neither one moves"],"<b>Light</b> is much faster than sound. That's why you see lightning before you hear thunder!"],
+  [5,"⚛️","What are the super tiny building blocks that everything is made of, even air and rocks?","Atoms",["Crumbs","Pixels","Specks"],"Everything is made of <b>atoms</b>. They're so small that millions could fit on the dot of an i."],
+  [5,"🚰","What is H₂O the science name for?","Water",["Salt","Air","Gold"],"<b>Water</b> is H₂O: two hydrogen atoms and one oxygen atom."],
+  [5,"🍎","Which scientist explained gravity after, the story goes, seeing an apple fall?","Isaac Newton",["Albert Einstein","Thomas Edison","Galileo"],"<b>Isaac Newton</b> explained gravity more than 300 years ago."],
+  [5,"🌡️","At what temperature does water freeze on the Fahrenheit scale?","32 degrees",["0 degrees","100 degrees","212 degrees"],"Water freezes at <b>32 degrees</b> Fahrenheit. That's 0 degrees Celsius."],
+  [5,"📝","What do we call a scientist's careful guess that can be tested with an experiment?","A hypothesis",["A conclusion","A result","A recipe"],"A testable guess is a <b>hypothesis</b>. Then you do an experiment to see if it's right!"],
+ ]},
+ { id: "castles", name: "Knights & Castles", emoji: "🛡️", intro: "Raise the drawbridge! Let's visit a castle long ago.", qs: [
+  [1,"👑","Who rules a kingdom along with the queen?","The king",["The jester","The cook","The farmer"],"<b>The king</b> and queen rule the kingdom from their castle."],
+  [1,"🛡️","What does a knight wear to protect his body in battle?","Armor",["Pajamas","A raincoat","A tutu"],"Knights wore metal <b>armor</b>. A full suit could weigh as much as a 2nd grader!"],
+  [1,"🐉","In old stories, which fire-breathing beast do brave knights fight?","A dragon",["A unicorn","A puppy","A dolphin"],"In old stories, brave knights fight <b>dragons</b>, like Saint George and the dragon."],
+  [2,"🌊","What is the ditch filled with water around a castle called?","A moat",["A pond","A river","A puddle"],"A <b>moat</b> is a ditch of water around a castle that keeps enemies out."],
+  [2,"🌉","What is the castle bridge that can be pulled up to keep enemies out?","A drawbridge",["A rope bridge","A tunnel","A slide"],"A <b>drawbridge</b> can be raised with chains so no one can cross the moat."],
+  [2,"🤹","Who told jokes and juggled to make the king laugh?","The jester",["The knight","The squire","The blacksmith"],"<b>The jester</b> wore a funny hat with bells and told jokes."],
+  [2,"🗡️","What weapon with a long metal blade did knights carry?","A sword",["A slingshot","A boomerang","A fishing pole"],"Knights carried a <b>sword</b>, plus a shield to block attacks."],
+  [3,"🐎","What is the contest where two knights on horses charge at each other with long poles?","Jousting",["Fencing","Wrestling","Racing"],"That contest is <b>jousting</b>. The long poles are called lances."],
+  [3,"🔨","Who made horseshoes, armor, and swords out of hot metal?","The blacksmith",["The baker","The jester","The king"],"<b>The blacksmith</b> heated metal in a fire and hammered it into shape."],
+  [3,"🪨","Which legendary king pulled a sword out of a stone?","King Arthur",["King Roland","King George","King Midas"],"Young <b>King Arthur</b> pulled the sword from the stone, which proved he should be king."],
+  [3,"⭕","What shape was the special table where King Arthur's knights sat?","Round",["Square","Triangle","Star"],"Arthur's knights sat at a <b>round</b> table, so no knight was more important than another."],
+  [4,"🏰","What is the biggest, strongest tower in the middle of a castle called?","The keep",["The moat","The dungeon","The gatehouse"],"<b>The keep</b> was the safest place in the castle, where the lord's family lived."],
+  [4,"🧑","What was a young man called who was training to be a knight and cared for a knight's armor and horse?","A squire",["A jester","A wizard","A peasant"],"A <b>squire</b> helped a knight and learned to fight. Later he could become a knight himself."],
+  [4,"📜","What do we call the time in history of knights and castles, about 500 to 1,500 years ago?","The Middle Ages",["The Stone Age","The Ice Age","The Space Age"],"Knights and castles were part of <b>the Middle Ages</b>."],
+  [4,"🎯","Which machine flung huge rocks at castle walls?","A catapult",["A seesaw","A windmill","A wheelbarrow"],"A <b>catapult</b> hurled big rocks to knock down castle walls."],
+  [5,"⚔️","What was the name of King Arthur's magic sword?","Excalibur",["Sting","Glamdring","Lightbringer"],"King Arthur's sword was <b>Excalibur</b>. In some stories, the Lady of the Lake gave it to him."],
+  [5,"🧙","Which wizard helped King Arthur?","Merlin",["Griffith","Gandalf","Dumbledore"],"<b>Merlin</b> was King Arthur's wise wizard."],
+  [5,"🏹","Which legendary outlaw lived in Sherwood Forest and stole from the rich to give to the poor?","Robin Hood",["King Arthur","Sir Lancelot","Peter Pan"],"<b>Robin Hood</b> and his Merry Men lived in Sherwood Forest in England."],
+  [5,"🔗","What was armor made of thousands of tiny linked metal rings called?","Chain mail",["Plate glass","Steel wool","Tin foil"],"<b>Chain mail</b> was made of thousands of little metal rings linked together."],
+  [5,"🦁","Which English king was nicknamed “the Lionheart”?","Richard I",["Henry VIII","King John","William the Conqueror"],"<b>Richard I</b> was called Richard the Lionheart because he was such a bold warrior."],
+ ]},
+ { id: "world", name: "Around the World", emoji: "🌏", intro: "Pack your suitcase! We're going around the world.", qs: [
+  [1,"🏳️","What do we call a piece of cloth with colors and shapes that stands for a country?","A flag",["A map","A coin","A stamp"],"Every country has its own <b>flag</b>."],
+  [1,"🐻","Which big white bear lives near the North Pole?","A polar bear",["A panda","A grizzly bear","A koala"],"<b>Polar bears</b> live near the North Pole. Their fur helps them blend in with the snow."],
+  [1,"👋","How do you say “hello” in Spanish?","Hola",["Bonjour","Ciao","Konnichiwa"],"<b>Hola</b> means hello in Spanish. Bonjour is French, and konnichiwa is Japanese."],
+  [2,"🗼","In which city is the Eiffel Tower?","Paris",["London","New York","Rome"],"The Eiffel Tower is in <b>Paris</b>, France."],
+  [2,"🐼","Giant pandas come from which country?","China",["Brazil","Canada","Egypt"],"Giant pandas come from the mountains of <b>China</b>. They eat bamboo almost all day!"],
+  [2,"🍁","Which leaf is on the flag of Canada?","A maple leaf",["An oak leaf","A palm leaf","A clover"],"Canada's flag has a red <b>maple leaf</b>. Maple syrup comes from maple trees!"],
+  [2,"🌮","What language do most people speak in Mexico?","Spanish",["English","French","Mexican"],"Most people in Mexico speak <b>Spanish</b>."],
+  [3,"🔺","In which country are the Great Pyramids of Giza?","Egypt",["Mexico","Peru","India"],"The Great Pyramids are in <b>Egypt</b>. They are about 4,500 years old!"],
+  [3,"🕰️","Big Ben is a famous clock tower in which city?","London",["Paris","Berlin","Dublin"],"Big Ben is in <b>London</b>, England."],
+  [3,"👢","Which country is shaped like a boot?","Italy",["Spain","Greece","France"],"<b>Italy</b> is shaped like a boot kicking a ball, which is the island of Sicily."],
+  [3,"🔴","Which country's flag is a red circle on a white background?","Japan",["China","Canada","Korea"],"<b>Japan</b>'s flag shows a red sun. Japan is called the Land of the Rising Sun."],
+  [4,"🗽","Which country gave the Statue of Liberty to the United States?","France",["England","Spain","Italy"],"<b>France</b> gave the Statue of Liberty to the United States as a gift of friendship in 1886."],
+  [4,"🌳","What is the biggest rain forest in the world?","The Amazon",["The Congo","Sherwood Forest","The Black Forest"],"<b>The Amazon</b> in South America is the biggest rain forest in the world."],
+  [4,"🕌","The Taj Mahal is in which country?","India",["Egypt","China","Turkey"],"The Taj Mahal is in <b>India</b>. It's made of white marble."],
+  [4,"🏟️","In which city is the Colosseum, where gladiators fought long ago?","Rome",["Athens","Paris","Cairo"],"The Colosseum is in <b>Rome</b>, Italy. It's almost 2,000 years old!"],
+  [5,"🇧🇷","What language do most people in Brazil speak?","Portuguese",["Spanish","French","Brazilian"],"Most people in Brazil speak <b>Portuguese</b>. Most of the rest of South America speaks Spanish."],
+  [5,"💶","What money do many countries in Europe share?","The euro",["The dollar","The pound","The yen"],"Many European countries share the <b>euro</b>, like France, Spain, and Italy."],
+  [5,"🏔️","Which mountain range has Mount Everest?","The Himalayas",["The Alps","The Andes","The Rockies"],"Mount Everest is in <b>the Himalayas</b>, in Asia."],
+  [5,"👨‍👩‍👧‍👦","Which country has the most people in the world?","India",["China","The United States","Russia"],"<b>India</b> has the most people. It passed China in 2023!"],
+  [5,"🦙","Machu Picchu, an ancient city high in the mountains, is in which country?","Peru",["Mexico","Chile","Egypt"],"Machu Picchu is in <b>Peru</b>. The Inca people built it about 600 years ago."],
+ ]},
+ { id: "inventions", name: "Inventions", emoji: "💡", intro: "Let's meet the inventors who changed the world!", qs: [
+  [1,"⚙️","Which round invention helps cars, bikes, and wagons roll?","The wheel",["The ladder","The hammer","The kite"],"<b>The wheel</b> is one of the most important inventions ever."],
+  [1,"📞","What do we use to call and talk to someone far away?","A phone",["A toaster","A clock","A lamp"],"A <b>phone</b> lets you talk to people far away."],
+  [1,"💡","What glows and gives light when you flip on the switch?","A light bulb",["A sponge","A pillow","A crayon"],"A <b>light bulb</b> glows when electricity flows through it."],
+  [2,"🔭","Which invention lets you see faraway stars and planets?","A telescope",["A microscope","A magnifying glass","A kaleidoscope"],"A <b>telescope</b> makes faraway things in the sky look closer."],
+  [2,"🚲","What has two wheels and pedals that you push with your feet?","A bicycle",["A wagon","A skateboard","A scooter"],"A <b>bicycle</b> has two wheels and pedals."],
+  [2,"🧊","Which kitchen invention keeps food cold?","A refrigerator",["An oven","A toaster","A blender"],"A <b>refrigerator</b> keeps food cold so it stays fresh."],
+  [2,"📺","Which invention shows moving pictures and shows in your living room?","A TV",["A radio","A microwave","A telephone"],"A <b>TV</b> shows moving pictures. Families started getting TVs about 75 years ago."],
+  [3,"🔬","Which invention lets you see tiny germs and cells?","A microscope",["A telescope","A stethoscope","A periscope"],"A <b>microscope</b> makes tiny things look huge, like germs and cells."],
+  [3,"💡","Who is famous for making the first long-lasting light bulb?","Thomas Edison",["Benjamin Franklin","Albert Einstein","Henry Ford"],"<b>Thomas Edison</b> made a light bulb that lasted a long time. He had over 1,000 inventions!"],
+  [3,"🪁","Which American flew a kite in a storm to learn about electricity?","Benjamin Franklin",["Thomas Edison","George Washington","Abraham Lincoln"],"<b>Benjamin Franklin</b> flew a kite in a storm to show lightning is electricity. Don't try it!"],
+  [3,"🧭","Which tool has a magnetic needle that always points north?","A compass",["A clock","A ruler","A thermometer"],"A <b>compass</b> needle always points north, so explorers could find their way."],
+  [4,"☎️","Who invented the telephone?","Alexander Graham Bell",["Thomas Edison","Henry Ford","Steve Jobs"],"<b>Alexander Graham Bell</b> made the first telephone call in 1876."],
+  [4,"🚗","Who used an assembly line to make cars cheap enough for lots of families?","Henry Ford",["Thomas Edison","The Wright brothers","Walt Disney"],"<b>Henry Ford</b> used an assembly line to build his Model T cars fast and cheap."],
+  [4,"🎆","Paper, fireworks, and the compass were first invented in which country?","China",["Egypt","Italy","England"],"Paper, fireworks, and the compass were all invented in <b>China</b> long ago."],
+  [4,"🌐","What is the giant network that connects computers all over the world called?","The Internet",["The radio","The phone book","The satellite"],"<b>The Internet</b> connects computers all over the world."],
+  [5,"📖","Which invention by Johannes Gutenberg made it easy to make lots of copies of books?","The printing press",["The typewriter","The camera","The pencil"],"Gutenberg's <b>printing press</b>, from the 1400s, made books much cheaper and easier to make."],
+  [5,"🦠","Which scientist discovered penicillin, a germ-fighting medicine, when mold grew in his lab?","Alexander Fleming",["Louis Pasteur","Marie Curie","Isaac Newton"],"<b>Alexander Fleming</b> noticed mold killing germs in 1928. That led to penicillin."],
+  [5,"🥜","Which scientist found hundreds of new uses for peanuts?","George Washington Carver",["Booker T. Washington","Thomas Edison","Benjamin Franklin"],"<b>George Washington Carver</b> found hundreds of uses for peanuts and helped farmers grow better crops."],
+  [5,"🏅","Who was the first woman to win a Nobel Prize?","Marie Curie",["Jane Goodall","Ada Lovelace","Amelia Earhart"],"<b>Marie Curie</b> won the Nobel Prize twice for her science about radioactivity."],
+  [5,"🔌","Which inventor, who has an electric car company named after him, worked on the kind of electricity in our homes?","Nikola Tesla",["Elon Musk","Thomas Edison","Henry Ford"],"<b>Nikola Tesla</b> helped bring alternating current (AC) electricity to homes. Tesla cars are named after him."],
+ ]},
+ { id: "holidays", name: "Holidays", emoji: "🎉", intro: "Let's celebrate! It's time for holidays all year long.", qs: [
+  [1,"🎃","On which holiday do kids dress up in costumes and go trick-or-treating?","Halloween",["Thanksgiving","Easter","Christmas"],"Kids go trick-or-treating on <b>Halloween</b>, October 31."],
+  [1,"🎅","Who brings presents on Christmas Eve in a sleigh pulled by reindeer?","Santa Claus",["The Easter Bunny","The Tooth Fairy","Cupid"],"<b>Santa Claus</b> rides his sleigh on Christmas Eve."],
+  [1,"💌","Which shape do you see on lots of Valentine's Day cards?","A heart",["A star","A square","A triangle"],"Valentine's Day is full of <b>hearts</b>, for love and friendship."],
+  [2,"🐰","Who hides eggs for kids to find at Easter?","The Easter Bunny",["Santa Claus","The Tooth Fairy","A leprechaun"],"<b>The Easter Bunny</b> hides eggs for kids to find."],
+  [2,"☘️","On St. Patrick's Day, which color do people wear?","Green",["Orange","Purple","Pink"],"People wear <b>green</b> on St. Patrick's Day, the color of Ireland."],
+  [2,"🎆","What lights up the sky on the Fourth of July?","Fireworks",["Rainbows","Comets","Balloons"],"<b>Fireworks</b> light up the sky to celebrate America's birthday."],
+  [2,"🦌","Which of Santa's reindeer has a shiny red nose?","Rudolph",["Dasher","Blitzen","Comet"],"<b>Rudolph</b> has a shiny red nose that lights the way for Santa's sleigh."],
+  [3,"🕎","Which Jewish holiday is celebrated by lighting candles on a menorah for eight nights?","Hanukkah",["Passover","Kwanzaa","Diwali"],"<b>Hanukkah</b> lasts eight nights. One more candle is lit each night."],
+  [3,"🐿️","On Groundhog Day, what does it mean if the groundhog sees its shadow?","Six more weeks of winter",["Spring comes early","It will snow all day","No school tomorrow"],"If the groundhog sees its shadow, legend says there will be <b>six more weeks of winter</b>."],
+  [3,"🌈","Which tiny Irish fairy is said to hide a pot of gold at the end of the rainbow?","A leprechaun",["An elf","A gnome","A troll"],"A <b>leprechaun</b> hides his pot of gold at the end of the rainbow, or so the story goes!"],
+  [3,"🎊","Which holiday is on January 1st?","New Year's Day",["Valentine's Day","Earth Day","Labor Day"],"<b>New Year's Day</b> is January 1st, the first day of the year."],
+  [4,"🧧","Which holiday is celebrated with dragon dances, red envelopes, and a new animal each year?","Lunar New Year",["Diwali","Cinco de Mayo","Mardi Gras"],"<b>Lunar New Year</b> has dragon dances and red envelopes with money inside. Each year has a zodiac animal."],
+  [4,"🎖️","Which November holiday honors people who served in the military?","Veterans Day",["Labor Day","Presidents' Day","Flag Day"],"<b>Veterans Day</b> is November 11. It thanks everyone who served in the military."],
+  [4,"🌍","Which day in April is all about taking care of our planet?","Earth Day",["Labor Day","Groundhog Day","Leap Day"],"<b>Earth Day</b> is April 22. People plant trees and clean up trash."],
+  [4,"✊","Which January holiday honors a famous civil rights leader?","Martin Luther King Jr. Day",["Presidents' Day","Veterans Day","Labor Day"],"<b>Martin Luther King Jr. Day</b> is in January, near his birthday."],
+  [5,"🪔","Which Hindu holiday is known for rows of little lamps and fireworks?","Diwali",["Kwanzaa","Lunar New Year","Mardi Gras"],"<b>Diwali</b> is a Hindu festival of lights, with little oil lamps, sweets, and fireworks."],
+  [5,"🕯️","Which holiday, from December 26 to January 1, celebrates African American culture?","Kwanzaa",["Hanukkah","Diwali","Juneteenth"],"<b>Kwanzaa</b> lasts seven days. A candle is lit each day for a different idea, like unity."],
+  [5,"🇲🇽","Cinco de Mayo remembers a battle won by which country?","Mexico",["Spain","France","The United States"],"Cinco de Mayo remembers when <b>Mexico</b> beat the French army in 1862."],
+  [5,"🎄","Which country started the tradition of the Christmas tree?","Germany",["Canada","Italy","Norway"],"Christmas trees started in <b>Germany</b> hundreds of years ago."],
+  [5,"🎉","Juneteenth celebrates the end of what in the United States?","Slavery",["The school year","Winter","The Revolutionary War"],"Juneteenth celebrates the end of <b>slavery</b>. On June 19, 1865, enslaved people in Texas learned they were free."],
+ ]},
+ { id: "vehicles", name: "Things That Go", emoji: "🚂", intro: "Start your engines! Let's learn about things that go.", qs: [
+  [1,"🚒","What color is a fire truck usually?","Red",["Blue","Green","Purple"],"Most fire trucks are <b>red</b>, so everyone can see them coming."],
+  [1,"🚌","Which big yellow vehicle takes kids to school?","A school bus",["A taxi","A tractor","A boat"],"A yellow <b>school bus</b> takes kids to school."],
+  [1,"🚂","Which vehicle rides on tracks and goes “choo choo”?","A train",["A bus","A boat","A helicopter"],"A <b>train</b> rides on tracks. Choo choo!"],
+  [2,"🚁","Which flying vehicle has spinning blades on top and can hover in one spot?","A helicopter",["A blimp","A rocket","A glider"],"A <b>helicopter</b> can fly straight up and hover in one spot."],
+  [2,"🚦","On a traffic light, which color means go?","Green",["Red","Yellow","Blue"],"<b>Green</b> means go, yellow means slow down, and red means stop."],
+  [2,"🚜","Which farm vehicle pulls plows and wagons?","A tractor",["A race car","A limousine","An ambulance"],"A <b>tractor</b> pulls heavy things on the farm."],
+  [2,"🚑","Which vehicle rushes sick or hurt people to the hospital?","An ambulance",["A garbage truck","A taxi","A tractor"],"An <b>ambulance</b> rushes people to the hospital with its siren on."],
+  [3,"⛽","Most cars burn what to make them go?","Gasoline",["Water","Milk","Juice"],"Most cars burn <b>gasoline</b>. Electric cars run on big batteries instead."],
+  [3,"🌊","What do we call a boat that can travel underwater?","A submarine",["A canoe","A sailboat","A ferry"],"A <b>submarine</b> can dive deep underwater."],
+  [3,"⛵","What pushes a sailboat across the water?","The wind",["A motor","Paddles","Fish"],"<b>The wind</b> fills the sails and pushes the boat along."],
+  [3,"🎈","Which flying thing floats because the air inside it is heated?","A hot air balloon",["A helicopter","A kite","A jet"],"A <b>hot air balloon</b> rises because hot air is lighter than cool air."],
+  [4,"🚢","What is the front of a ship called?","The bow",["The stern","The deck","The mast"],"The front of a ship is <b>the bow</b>. The back is the stern."],
+  [4,"⚓","What heavy hook does a ship drop to the bottom so it won't drift away?","An anchor",["A mast","A rudder","A sail"],"A ship drops its <b>anchor</b> to stay in one place."],
+  [4,"🚂","What did old steam trains usually burn to make steam?","Coal",["Gasoline","Batteries","Ice"],"Steam trains burned <b>coal</b> to boil water and make steam."],
+  [4,"🌕","What were the NASA missions that landed astronauts on the Moon called?","Apollo",["Gemini","Voyager","Mercury"],"The <b>Apollo</b> missions landed astronauts on the Moon, starting in 1969."],
+  [5,"🚄","What are Japan's super fast bullet trains called?","Shinkansen",["Amtrak","The Orient Express","The Polar Express"],"Japan's bullet trains are called <b>Shinkansen</b>. They can go about 200 miles per hour!"],
+  [5,"🤖","Which NASA rover landed on Mars in 2021?","Perseverance",["Curiosity","Voyager","Apollo"],"<b>Perseverance</b> landed on Mars in 2021. It even brought a little helicopter named Ingenuity!"],
+  [5,"🧊","Which famous ship sank in 1912 after hitting an iceberg?","The Titanic",["The Mayflower","The Lusitania","The Santa María"],"<b>The Titanic</b> sank on its very first trip, in 1912."],
+  [5,"✈️","What was the name of the Wright brothers' first airplane?","The Wright Flyer",["The Spirit of St. Louis","Air Force One","The Kitty Hawk"],"Their plane was <b>the Wright Flyer</b>. It first flew in 1903 near Kitty Hawk, North Carolina."],
+  [5,"🛩️","Who was the first woman to fly an airplane alone across the Atlantic Ocean?","Amelia Earhart",["Sally Ride","Bessie Coleman","Harriet Quimby"],"<b>Amelia Earhart</b> flew alone across the Atlantic in 1932."],
+ ]},
  { id: "dragonmasters", group: "fun", name: "Dragon Masters", emoji: "🐉", intro: "Calling all Dragon Masters! Let's visit King Roland's castle.", qs: [
   [1, "🐉", "In Dragon Masters, what is the name of Drake's dragon?", "Worm", ["Vulcan", "Shu", "Kepri"], "Drake's dragon is named <b>Worm</b>. He is an Earth Dragon!"],
   [1, "🔥", "What kind of dragon is Vulcan, Rori's dragon?", "A Fire Dragon", ["A Water Dragon", "An Ice Dragon", "A Moon Dragon"], "Rori's dragon, Vulcan, is a <b>Fire Dragon</b>."],
@@ -915,6 +1049,28 @@ const BANK = [
   [3,"🌊","Which PAW Patrol pup does water rescues?","Zuma",["Rocky","Skye","Marshall"],"<b>Zuma</b> is the water rescue pup with his hovercraft."],
   [3,"♻️","Which PAW Patrol pup is in charge of recycling?","Rocky",["Rubble","Chase","Zuma"],"<b>Rocky</b> is the recycling pup. “Don't lose it, reuse it!”"],
   [4,"🌙","In “Despicable Me,” what does Gru want to steal?","The Moon",["The Sun","A pyramid","The Statue of Liberty"],"Gru plans to shrink and steal <b>the Moon</b>!"],
+ ]},
+ { id: "olympics", group: "fun", name: "The Olympics", emoji: "🥇", intro: "Let the games begin! Go for the gold.", qs: [
+  [1,"🥇","What do you win for coming in first place at the Olympics?","A gold medal",["A silver medal","A bronze medal","A ribbon"],"First place wins a <b>gold medal</b>!"],
+  [1,"🏊","Which Olympic sport happens in a pool?","Swimming",["Skiing","Soccer","Boxing"],"<b>Swimming</b> races happen in a pool."],
+  [1,"🚴","Which Olympic sport do you do on a bike?","Cycling",["Rowing","Fencing","Diving"],"Bike racing is called <b>cycling</b>."],
+  [2,"⭕","How many rings are on the Olympic flag?","5",["3","4","6"],"The Olympic flag has <b>5 rings</b>, for the parts of the world that come together."],
+  [2,"🥈","What medal do you win for second place?","Silver",["Gold","Bronze","Copper"],"Second place wins <b>silver</b>. Third place wins bronze."],
+  [2,"⛷️","In which Olympics do athletes ski, skate, and snowboard?","The Winter Olympics",["The Summer Olympics","The Water Olympics","The Space Olympics"],"Skiing, skating, and snowboarding are in <b>the Winter Olympics</b>."],
+  [2,"🔥","What is carried around the world and used to light a big flame when the Olympics start?","The Olympic torch",["A lantern","A candle","A flashlight"],"Runners carry <b>the Olympic torch</b> all the way to the stadium."],
+  [3,"🏛️","In which country did the Olympics begin long ago?","Greece",["Italy","Egypt","China"],"The first Olympics were in <b>Greece</b>, almost 3,000 years ago."],
+  [3,"🤸","Which American gymnast is famous for amazing flips and has won lots of gold medals?","Simone Biles",["Serena Williams","Katie Ledecky","Mia Hamm"],"<b>Simone Biles</b> is one of the greatest gymnasts ever. Some moves are named after her!"],
+  [3,"⚡","Which Jamaican sprinter was called the fastest man in the world?","Usain Bolt",["Michael Phelps","Carl Lewis","LeBron James"],"<b>Usain Bolt</b> still holds the world record in the 100-meter dash."],
+  [3,"📅","How often are the Summer Olympics held?","Every 4 years",["Every year","Every 2 years","Every 10 years"],"The Summer Olympics happen <b>every 4 years</b>. So do the Winter Olympics."],
+  [4,"🏊","Which swimmer has won the most Olympic gold medals ever?","Michael Phelps",["Katie Ledecky","Mark Spitz","Ryan Lochte"],"<b>Michael Phelps</b> won 23 gold medals! He's from Baltimore."],
+  [4,"🏃","About how many miles long is a marathon?","26 miles",["10 miles","13 miles","50 miles"],"A marathon is about <b>26 miles</b> long (26.2 to be exact)."],
+  [4,"🏒","In 1980, the U.S. hockey team beat the Soviet Union in a famous upset. What is it called?","The Miracle on Ice",["The Big Chill","The Ice Bowl","The Frozen Four"],"<b>The Miracle on Ice</b> was when a team of college players beat the best hockey team in the world."],
+  [4,"🌴","Which U.S. city will host the 2028 Summer Olympics?","Los Angeles",["New York","Chicago","Miami"],"The 2028 Summer Olympics will be in <b>Los Angeles</b>."],
+  [5,"🗼","Which city hosted the 2024 Summer Olympics?","Paris",["London","Tokyo","Rome"],"The 2024 Summer Olympics were in <b>Paris</b>, France."],
+  [5,"🏔️","The 2026 Winter Olympics were held in which country?","Italy",["Canada","Japan","Switzerland"],"The 2026 Winter Olympics were in <b>Italy</b>, in Milan and Cortina."],
+  [5,"🌊","Which American swimmer is famous for winning long races like the 800 and 1,500 meters?","Katie Ledecky",["Simone Biles","Allyson Felix","Serena Williams"],"<b>Katie Ledecky</b> is a distance swimming superstar with many gold medals."],
+  [5,"🔟","What is the Olympic event with ten track-and-field contests, like running, jumping, and throwing?","The decathlon",["The triathlon","The marathon","The pentathlon"],"<b>Decathlon</b> means ten contests. “Deca” means ten!"],
+  [5,"🫒","In ancient Greece, what did Olympic winners get as their prize?","A crown of olive leaves",["A gold medal","A chariot","A bag of coins"],"Ancient winners got <b>a crown of olive leaves</b>. Gold medals came much later."],
  ]},
 ];
 
@@ -2025,11 +2181,11 @@ const GROWN = {
 /* Family game topics: one shared board. Kids get questions from the kid categories listed in `kids`
    ("*" = any kid category), grown-ups get questions from the `grown` sections of GROWN. */
 const FAMILY = [
-  { id: "fam_history", name: "History",          emoji: "🏛️", intro: "Let's travel back in time!",                    kids: ["history"], grown: ["History", "U.S. Presidents"] },
-  { id: "fam_science", name: "Science & Nature", emoji: "🔬", intro: "Animals, space, dinosaurs, and how things work!", kids: ["animals", "space", "body", "earth", "plants", "ocean", "dinos", "dinoexperts"], grown: ["Science"] },
+  { id: "fam_history", name: "History",          emoji: "🏛️", intro: "Let's travel back in time!",                    kids: ["history", "castles"], grown: ["History", "U.S. Presidents"] },
+  { id: "fam_science", name: "Science & Nature", emoji: "🔬", intro: "Animals, space, dinosaurs, and how things work!", kids: ["animals", "space", "body", "earth", "plants", "ocean", "dinos", "dinoexperts", "science", "inventions"], grown: ["Science"] },
   { id: "fam_books",   name: "Books",            emoji: "📚", intro: "Let's remember some great books and stories!",  kids: ["stories", "dragonmasters", "galaxyzack", "treehouse", "binderofdoom"], grown: ["Literature"] },
-  { id: "fam_geo",     name: "Geography",        emoji: "🌎", intro: "Grab your map! Let's travel the world.",       kids: ["maps"], grown: ["Geography"] },
-  { id: "fam_sports",  name: "Sports",           emoji: "🏆", intro: "Lace up! It's game time.",                      kids: ["soccer", "hoops", "baltimore"], grown: ["Sports"] },
+  { id: "fam_geo",     name: "Geography",        emoji: "🌎", intro: "Grab your map! Let's travel the world.",       kids: ["maps", "world"], grown: ["Geography"] },
+  { id: "fam_sports",  name: "Sports",           emoji: "🏆", intro: "Lace up! It's game time.",                      kids: ["soccer", "hoops", "baltimore", "olympics"], grown: ["Sports"] },
   { id: "fam_movies",  name: "Movies & TV",      emoji: "🎬", intro: "Grab the popcorn! It's movie night.",           kids: ["disney", "jurassic", "starwars", "movienight", "cartoons"], grown: ["Pop Culture"] },
   { id: "fam_words",   name: "Words",            emoji: "🔤", intro: "Let's play with letters and words!",            kids: ["words"], grown: ["Word Origins"] },
   { id: "fam_food",    name: "Food",             emoji: "🍕", intro: "Time to eat! Let's learn about yummy food.",     kids: ["food"], grown: ["Food & Drink"] },
@@ -2051,6 +2207,13 @@ const PENALTIES = [
   { id: "grown", name: "Grown-ups lose points", sub: "Kids are safe", family: true },
   { id: "all",   name: "Everyone loses points", sub: "Real Jeopardy rules" },
 ];
+/* Kids pick from 4 choices, or say the answer out loud and check it, like the grown-ups do. */
+const ANSWER_STYLES = [
+  { id: "pick", name: "Pick from 4 choices", sub: "Multiple choice" },
+  { id: "say",  name: "Say it out loud",     sub: "Harder! No choices to help" },
+];
+/* A few kid questions only make sense with the choices showing ("Which of these..."), so they keep them. */
+const needsChoices = (item) => /which of these|which word (rhymes|starts)/i.test(item.text);
 const TOPICS = [
   { id: "mix",    name: "Mix it up",    sub: "School stuff and favorites" },
   { id: "school", name: "School stuff", sub: "Science, math, words, and more" },
@@ -2068,7 +2231,7 @@ const DEFAULT_NAMES = ["Player 1", "Player 2", "Player 3", "Player 4"];
 function load(key, fallback) { try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : fallback; } catch (e) { return fallback; } }
 function save(key, val) { try { localStorage.setItem(key, JSON.stringify(val)); } catch (e) {} }
 
-let prefs = Object.assign({ count: 1, names: DEFAULT_NAMES.slice(), level: "all", read: true, bot: false, botLevel: "medium", topics: "mix", family: false, roles: ["kid", "grown", "grown", "kid"], penalty: "off" }, load("bb-prefs", {}));
+let prefs = Object.assign({ count: 1, names: DEFAULT_NAMES.slice(), level: "all", read: true, bot: false, botLevel: "medium", topics: "mix", family: false, roles: ["kid", "grown", "grown", "kid"], penalty: "off", answers: "pick" }, load("bb-prefs", {}));
 
 /* ===== Computer player ===== */
 const BOT_NAME = "Robo";
@@ -2219,6 +2382,7 @@ function newGame() {
     screen: "lesson",
     family,
     penalty: penaltySetting(),
+    say: prefs.answers === "say",
     round: 1,
     players: prefs.names.slice(0, prefs.count).map((n, i) => ({ name: (n || "").trim() || DEFAULT_NAMES[i], score: 0, role: family ? prefs.roles[i] || "kid" : "kid" }))
       .concat(prefs.bot && !family ? [{ name: BOT_NAME, score: 0, bot: true }] : []),
@@ -2327,6 +2491,8 @@ function renderHome() {
   $("topics").hidden = fam;
   $("penalty").innerHTML = PENALTIES.filter((o) => fam || !o.family).map((o) =>
     `<button type="button" class="chip" data-pen="${o.id}" aria-pressed="${penaltySetting() === o.id}">${o.name}<small>${o.sub}</small></button>`).join("");
+  $("answers").innerHTML = ANSWER_STYLES.map((o) =>
+    `<button type="button" class="chip" data-ans="${o.id}" aria-pressed="${(prefs.answers || "pick") === o.id}">${o.name}<small>${o.sub}</small></button>`).join("");
   $("fam-topics").hidden = !fam;
   $("fam-topics").innerHTML = FAMILY.map((t) => `<span class="chip mini static">${t.emoji} ${esc(t.name)}</span>`).join("");
   $("levels").innerHTML = LEVELS.map((l) =>
@@ -2372,6 +2538,10 @@ $("levels").addEventListener("click", (e) => {
 $("penalty").addEventListener("click", (e) => {
   const b = e.target.closest("[data-pen]"); if (!b) return;
   readNames(); prefs.penalty = b.dataset.pen; save("bb-prefs", prefs); renderHome(); sndTap();
+});
+$("answers").addEventListener("click", (e) => {
+  const b = e.target.closest("[data-ans]"); if (!b) return;
+  readNames(); prefs.answers = b.dataset.ans; save("bb-prefs", prefs); renderHome(); sndTap();
 });
 $("read-toggle").addEventListener("click", () => { prefs.read = !prefs.read; save("bb-prefs", prefs); renderHome(); sndTap(); });
 $("go-lesson").addEventListener("click", () => { readNames(); newGame(); startLesson(); });
@@ -2455,7 +2625,8 @@ function renderBoard() {
     `<div class="score ${multi && i === S.turn ? "turn" : ""}"><span>${nameTag(p)}</span><span class="pts">${p.score}</span></div>`).join("");
   const now = S.players[S.turn], botTurn = isBot(now);
   $("round-tag").textContent = (S.round === 2 ? "Double Jeopardy · Double points!" : "Round 1")
-    + (S.penalty === "all" ? " · Misses lose points" : S.penalty === "grown" && S.family ? " · Grown-up misses lose points" : "");
+    + (S.penalty === "all" ? " · Misses lose points" : S.penalty === "grown" && S.family ? " · Grown-up misses lose points" : "")
+    + (S.say ? " · Say it out loud" : "");
   $("round-tag").classList.toggle("double", S.round === 2);
   $("turn-line").textContent = botTurn ? `🤖 ${now.name} is picking a square…`
     : S.family ? `${isGrown(now) ? "🧑" : "🧒"} ${now.name}, pick a square! (${isGrown(now) ? "grown-up" : "kid"} questions)`
@@ -2570,7 +2741,8 @@ function openClue(ci, ri, boost, bet, who = S.turn, passed = []) {
   const item = grown ? gk(cl.p) : qk(cl.k);
   const base = isStar ? bet : cl.value;
   const canBoost = !!(S.family && !grown && cl.p && !isBot(player) && base > 0);
-  current = { ci, ri, item, grown, boost: !!boost, isStar, bet, who, passed, value: base * (boost ? 3 : 1), risk: base, order: grown ? [] : shuffle([item.a, ...item.w]) };
+  const say = !grown && !!S.say && !isBot(player) && !needsChoices(item); // kid says the answer out loud, no choices
+  current = { ci, ri, item, grown, say, boost: !!boost, isStar, bet, who, passed, value: base * (boost ? 3 : 1), risk: base, order: grown ? [] : shuffle([item.a, ...item.w]) };
   const multi = S.players.length > 1;
   const passer = passed.length ? S.players[passed[passed.length - 1]] : null;
   const passBtn = isBot(player) ? "" : `<button type="button" class="btn alt small" id="clue-pass">🙅 Pass</button>`;
@@ -2580,7 +2752,7 @@ function openClue(ci, ri, boost, bet, who = S.turn, passed = []) {
     ${multi ? `<div class="who">${nameTag(player)}'s turn${passer ? ` <small>${esc(passer.name)} passed. Your chance!</small>` : ""}</div>` : ""}
     ${boost ? `<div class="star-banner boost">🦸 Grown-up question · Triple points! 🦸</div>` : grown ? `<span class="grown-tag">Grown-up question</span>` : ""}
     <p class="q" id="clue-q">${esc(item.text)}</p>
-    ${grown ? `<p class="say-hint">${boost ? "Say your answer out loud. Then a grown-up can show the answer and check it!" : "Say your answer out loud, then show the answer."}</p>` : `<div class="choices" id="choices">
+    ${grown || say ? `<p class="say-hint">${boost ? "Say your answer out loud. Then a grown-up can show the answer and check it!" : "Say your answer out loud, then show the answer."}</p>` : `<div class="choices" id="choices">
       ${current.order.map((c, i) => `<button type="button" class="choice" data-i="${i}"><span class="k">${"ABCD"[i]}</span><span>${esc(c)}</span></button>`).join("")}
     </div>`}
     <div id="clue-result"></div>
@@ -2591,11 +2763,13 @@ function openClue(ci, ri, boost, bet, who = S.turn, passed = []) {
     </div>`;
   $("modal").hidden = false;
   if (boost) sndStar(); else sndTap();
-  const sayQ = () => speak(grown ? item.text : item.text + " " + current.order.map((c, i) => "ABCD"[i] + ". " + c + ".").join(" "));
+  const sayQ = () => speak(grown || say ? item.text : item.text + " " + current.order.map((c, i) => "ABCD"[i] + ". " + c + ".").join(" "));
   if (prefs.read) setTimeout(() => { if (passer) speak(passer.name + " passed. " + player.name + ", your chance! "); sayQ(); }, 150);
-  if (grown) {
+  if (grown || say) {
     grownReveal($("clue-result"), $("clue-actions"), item, sayQ, settle);
-    if (passBtn) { $("clue-actions").insertAdjacentHTML("beforeend", passBtn); $("clue-pass").onclick = passClue; } // gone once the answer is shown
+    // The boost and pass buttons go away once the answer is shown
+    if (canBoost) { $("clue-actions").insertAdjacentHTML("beforeend", `<button type="button" class="btn small boost" id="clue-boost">🦸 Try the grown-up question for ${base * 3}!${isStar || losesPoints(player) ? ` (miss = −${base})` : ""}</button>`); $("clue-boost").onclick = () => { hush(); openClue(ci, ri, true, bet, who, passed); }; }
+    if (passBtn) { $("clue-actions").insertAdjacentHTML("beforeend", passBtn); $("clue-pass").onclick = passClue; }
     $("clue-actions").querySelector(".btn").focus({ preventScroll: true });
     return;
   }
@@ -2641,14 +2815,14 @@ function settle(ok) {
   const adult = isGrown(player);
   const head = bot ? (ok ? `${BOT_NAME} got it!` : `${BOT_NAME} missed it!`) : ok ? (current.boost ? "WOW! You beat a grown-up question!" : pick(adult ? GROWN_CHEERS : CHEERS)) : pick(adult ? GROWN_COMFORT : COMFORT);
   const sub = ok ? `+${current.value} points${multi ? " for " + esc(player.name) : ""}!${current.boost ? " Triple points!" : ""}`
-    : ((grown ? (lose ? "" : "No points this time.") : `The answer is <b>${esc(current.item.a)}</b>.`) + (lose ? ` −${current.risk} points.` : "")).trim();
-  const shown = grown ? $("clue-result").innerHTML : "";
+    : ((grown || current.say ? (lose ? "" : "No points this time.") : `The answer is <b>${esc(current.item.a)}</b>.`) + (lose ? ` −${current.risk} points.` : "")).trim();
+  const shown = grown || current.say ? $("clue-result").innerHTML : "";
   $("clue-result").innerHTML = shown + `<div class="result ${ok ? "ok" : "no"}"><h3>${bot ? "🤖 " : ok ? "🎉 " : "💡 "}${head}</h3><p>${sub}</p>${grown ? "" : `<p>${current.item.f}</p>`}</div>`;
   $("clue-actions").innerHTML = `<button type="button" class="btn green" id="clue-done">Back to the board ▶</button>`;
   $("clue-done").onclick = closeClue;
   $("clue-done").focus({ preventScroll: true });
   if (ok) { sndRight(); if (!bot) confetti(current.boost ? 280 : current.isStar ? 220 : 110); } else sndWrong();
-  if (prefs.read) speak(head + (grown ? "" : " " + (ok ? "" : "The answer is " + current.item.a + ". ") + plain(current.item.f)));
+  if (prefs.read) speak(head + (grown ? "" : " " + (ok || current.say ? "" : "The answer is " + current.item.a + ". ") + plain(current.item.f)));
 }
 /* Pass: no points won or lost. The next player who hasn't passed gets their own version of the question.
    A Daily Double belongs to the picker only, so passing it (or everyone passing) leaves the square unanswered. */
@@ -2666,7 +2840,7 @@ function passClue() {
   const multi = n > 1 && !isStar;
   const head = multi ? "Everybody passed!" : "You passed!";
   const hint = $("clue").querySelector(".say-hint"); if (hint) hint.remove();
-  if (!current.grown) $("choices").querySelectorAll(".choice").forEach((b, j) => { b.disabled = true; b.classList.add(current.order[j] === current.item.a ? "right" : "dim"); });
+  if ($("choices")) $("choices").querySelectorAll(".choice").forEach((b, j) => { b.disabled = true; b.classList.add(current.order[j] === current.item.a ? "right" : "dim"); });
   $("clue-result").innerHTML = `<div class="result pass"><h3>🙅 ${head}</h3><p>No points won or lost. The answer is <b>${esc(current.item.a)}</b>.</p>${current.grown ? "" : `<p>${current.item.f}</p>`}</div>`;
   $("clue-actions").innerHTML = `<button type="button" class="btn green" id="clue-done">Back to the board ▶</button>`;
   $("clue-done").onclick = closeClue;
@@ -2735,6 +2909,7 @@ function renderFinal() {
   const p = S.players[F.player], bot = isBot(p);
   const grown = !!(S.family && isGrown(p) && F.p);
   const item = grown ? gk(F.p) : qk(F.k);
+  const say = !grown && !!S.say && !bot && !needsChoices(item);
   if (F.step === 1) {
     const sc = p.score, opts = wagerOptions(sc);
     const choose = (o) => { F.wagers[F.player] = { v: o.v, free: sc <= 0 }; F.step = 2; sndTap(); renderFinal(); };
@@ -2761,14 +2936,14 @@ function renderFinal() {
     return;
   }
   if (F.step === 2) {
-    const order = grown ? [] : F.order || (F.order = shuffle([item.a, ...item.w]));
+    const order = grown || say ? [] : F.order || (F.order = shuffle([item.a, ...item.w]));
     card.innerHTML = `<span class="cat-pill">${cat.emoji} ${esc(cat.name)} · ${multi ? nameTag(p) + " · " : ""}bet ${F.wagers[F.player].v}</span>
       ${grown ? `<span class="grown-tag">Grown-up question</span>` : ""}
       <p class="q" id="clue-q">${esc(item.text)}</p>
-      ${grown ? `<p class="say-hint">Say your answer out loud, then show the answer.</p>`
+      ${grown || say ? `<p class="say-hint">Say your answer out loud, then show the answer.</p>`
         : `<div class="choices" id="f-choices">${order.map((c, i) => `<button type="button" class="choice" data-i="${i}"><span class="k">${"ABCD"[i]}</span><span>${esc(c)}</span></button>`).join("")}</div>`}
       <div id="f-result" style="width:100%"></div><div class="clue-actions" id="f-actions">${canSpeak ? `<button type="button" class="btn alt small" id="f-speak">🔊 Read to me</button>` : ""}</div>`;
-    const sayText = grown ? item.text : item.text + " " + order.map((c, i) => "ABCD"[i] + ". " + c + ".").join(" ");
+    const sayText = grown || say ? item.text : item.text + " " + order.map((c, i) => "ABCD"[i] + ". " + c + ".").join(" ");
     const sayQ = () => speak(sayText);
     if ($("f-speak")) $("f-speak").onclick = sayQ;
     if (prefs.read) setTimeout(sayQ, 150);
@@ -2779,14 +2954,14 @@ function renderFinal() {
       if (ok) p.score += w.v; else if (!w.free) p.score -= w.v;
       if (grown) { grownSeen.add(item.key); save("bb-gseen", [...grownSeen]); }
       const head = bot ? (ok ? `${p.name} got it!` : `${p.name} missed it!`) : ok ? pick(grown ? GROWN_CHEERS : CHEERS) : pick(grown ? GROWN_COMFORT : COMFORT);
-      const shown = grown ? $("f-result").innerHTML : "";
+      const shown = grown || say ? $("f-result").innerHTML : "";
       $("f-result").innerHTML = shown + `<div class="result ${ok ? "ok" : "no"}"><h3>${bot ? "🤖 " : ok ? "🎉 " : "💡 "}${head}</h3>
         <p>${ok ? `+${w.v} points!` : w.free || w.v === 0 ? "No points lost." : `−${w.v} points.`}</p>${grown ? "" : `<p>${item.f}</p>`}</div>`;
       const more = F.player < S.players.length - 1;
       $("f-actions").innerHTML = `<button type="button" class="btn green" id="f-next">${more ? `${nameTag(S.players[F.player + 1])}'s turn ▶` : "See who won! 🏆"}</button>`;
       $("f-next").onclick = () => { hush(); botCancel(); if (more) { F.player++; F.step = 1; } else F.step = 3; renderFinal(); };
       if (ok) { sndRight(); if (!bot) confetti(160); } else sndWrong();
-      if (prefs.read) speak(head + (grown ? "" : " " + (ok ? "" : "The answer is " + item.a + ". ") + plain(item.f)));
+      if (prefs.read) speak(head + (grown ? "" : " " + (ok || say ? "" : "The answer is " + item.a + ". ") + plain(item.f)));
     };
     const finalAnswer = (i) => {
       if (F.answers[F.player] !== undefined) return;
@@ -2796,7 +2971,7 @@ function renderFinal() {
       });
       settleFinal(order[i] === item.a);
     };
-    if (grown) {
+    if (grown || say) {
       grownReveal($("f-result"), $("f-actions"), item, sayQ, settleFinal);
     } else if (bot) {
       $("f-choices").classList.add("locked");
